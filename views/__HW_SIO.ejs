@@ -409,11 +409,15 @@
             break;
 
          case "SIO_LIST_CUELINE":
+            console.log("SIO_LIST_CUELINE"+message);
+            //alert("CUELINE_LIST");
             // message generated in HW_BROADCASTING           
             if (document.getElementById("DIV_CUELINE")) { document.getElementById("DIV_CUELINE").innerHTML = updatedTime + message; }
             break;
 
          case "SIO_CUELINE_PICKING":
+            console.log("SIO_CUELINE_PICKING"+message);
+           // alert("CUELINEPICKING");
             // message generated in HW_BROADCASTING         
             if (document.getElementById("DIV_CUELINE_PICKING")) { document.getElementById("DIV_CUELINE_PICKING").innerHTML = message; }
             break;
