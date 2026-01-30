@@ -1,0 +1,125 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>DEVELOPER</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <script>
+
+
+
+        function DatabaseSwitchToRetail() {
+            let c = confirm("switch to regular database? switches to active database. Any changes will effect the actual client-database");
+            if (c == true) { //alert("here we go");             
+
+                fetch('/DB_SWITCH_TO_RETAILMODE', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Switched to normal DB");
+                            location.reload();
+                        }
+                    });
+            } else { alert("canceled"); }
+        }
+
+        function DatabaseSwitchToDeveloper() {
+            let msg = "";
+            msg += "\n Switch to developer database? A red flag will be shown to all pages to indicate the system is in testing mode. ";
+            msg += "\n \nYou can only use the QR_TESTPASS to simulate vending";
+            msg += "\n \nChanges (to system settings and vending, inventory & orders) will NOT effect the retail-database.";
+
+
+            let c = confirm(msg);
+            if (c == true) {
+                //alert("here we go"); 
+                fetch('/DB_SWITCH_TO_DEVMODE', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Switched to developer DB");
+                            // location.reload();
+                        }
+                    });
+            } else { alert("canceled"); }
+        }
+
+        function DatabasePopulateDeveloper(DOTHIS) {
+            let c = confirm("re-populate developer database? drop and re-populate the developer database & all changes will be lost");
+            if (c == true) {
+
+                alert("changes will be made to developer database: " + DOTHIS);
+                let terminal = "";
+                let action = DOTHIS;
+                let message = DOTHIS;
+                let MSG = terminal + "___" + action + "___" + message;
+                S2.emit('MFO', MSG);
+            } else { alert("canceled"); }
+        }
+
+    </script>
+</head>
+<div class="hwlogo_operator"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+
+<body class="">
+    <div class="operator_menu">
+        <div class="operator_header">DEVELOPER PAGE (TRAINED PERSONEL ONLY!)<br></div>
+
+        <div class="blockContent">
+            <div class="operator_header">installation and calibration</div>
+            <button onclick="window.open('/HW', '_blank')" class="btnWide">LINKPAGE</button>
+            <button onclick="window.open('/HW_ROBOT', '_blank')" class="btnWide">ROBOT</button>
+            <button onclick="window.open('/HW_TESTS', '_blank')" class="btnWide">TEST RUNS</button>
+        </div>
+
+        <div class="blockContent">
+            <div class="operator_header">switch database</div>
+            <button class="btnWide" onclick="DatabaseSwitchToRetail()">RETAIL MODE</button>
+            <button class="btnWide" onclick="DatabaseSwitchToDeveloper()">SIMULATION MODE</button>
+        </div>
+        <div class="blockContent">
+            <div class="operator_header">populate database for test runs / simulations</div>
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_FIVE_ORDERS')">FIVE ORDERS IN CUE<br>
+            </button>
+
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_ONE_PICKING')">ONE IS PICKING<br>
+            </button>
+
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_CUELINE_EMPTY')">CUELINE EMPTY (all
+                picked)<br>
+            </button>
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_CUELINE_FULL')">CUELINE FULL (all inCue)<br>
+            </button>
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_MACHINE_EMPTY')">EMPTY MACHINE<br>
+            </button>
+            <button class="btnWide" onclick="DatabasePopulateDeveloper('DEV_MACHINE_FULL')">FULL MACHINE<br>
+            </button>
+        </div>
+
+        <div class="blockContent">
+            <div class="operator_header">database</div>
+            <button onclick="window.open('/\/localhost/phpmyadmin/index.php', '_blank')" class="btnWide">PHPMYADMIN
+                LOCALHOST</button>
+            <button onclick="window.open('/192.168.1.2:8080', '_blank')" class="btnWide">PHPMYADMIN DOCKER</button>
+            
+        </div>
+    </div>
+</body>
+
+
+</html>

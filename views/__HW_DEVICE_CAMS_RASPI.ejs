@@ -1,0 +1,252 @@
+<div class="device_wrapper">
+    <div class="device_header">RASPBERRY PI DEVICES</div>
+    nr: <% GLOBALS.configDevices.raspberryPiDevices.length %>
+        <div class="device_gridx">
+            <% if( GLOBALS.configDevices.raspberryPiDevices && GLOBALS.configDevices.raspberryPiDevices.length> 0) { %>
+                <% GLOBALS.configDevices.raspberryPiDevices.forEach(raspi=> { %>
+                    <div id="raspiStatusPanel_<%= raspi.id %>" class="device_container"
+                        data-device-id="<%= raspi.id %>">
+
+                        <div class="device_header">
+                            <%= raspi.name %> (<%= raspi.id %>)
+                                    <span class="device-type-badge device-type-<%= raspi.type %>">
+                                        <%= raspi.type %>
+                                    </span>
+                        </div>
+
+                        <div class="device_container">
+                            <div class="device_header">
+                                <div>Host: <span class="device-value">
+                                        <%= raspi.host %>:<%= raspi.port %>
+                                    </span></div>
+                                <div>Description: <span class="device-description">
+                                        <%= raspi.description %>
+                                    </span></div>
+                            </div>
+
+                            <div class="device_header">
+                                <div>Connection: <span id="connectionState_<%= raspi.id %>"
+                                        class="device_replies device-unknown">Unknown</span></div>
+                                <div>Status: <span id="status_<%= raspi.id %>"
+                                        class="device_replies device-unknown">Unknown</span></div>
+                                <div>Last Update: <span id="lastUpdateTime_<%= raspi.id %>"
+                                        class="device_replies">Never</span></div>
+                            </div>
+
+                            <div class="device_container">
+                                <button class="device_command" onclick="getRaspiStatus('<%= raspi.id %>')">🔄
+                                    Status</button>
+                                <button class="device_command" onclick="sendRaspiCommand('<%= raspi.id %>', 'ping')">📡
+                                    Ping</button>
+                                <button class="device_command"
+                                    onclick="sendRaspiCommand('<%= raspi.id %>', 'restart')">🔄
+                                    Restart</button>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                        <% } else { %>
+                            <div class="no-devices-message">
+                                No Raspberry Pi devices found
+                            </div>
+                            <% } %>
+        </div>
+
+</div>
+
+
+<!-- Global Messages Panel MOVED TO AVFX main page-->
+<!--
+        <div id="deviceMessages" class="device-messages-container">
+            <div class="device-messages-header">Device Communication Log</div>
+            <div id="messageList" class="device-messages-content">No messages yet...</div>
+            <button onclick="clearMessages()" class="device-clear-btn">🗑️ Clear Messages</button>
+        </div>
+        -->
+
+
+
+<script>
+    // Raspberry Pi device-specific functions
+    function getRaspiStatus(deviceId) {
+        console.log(`Requesting Raspberry Pi status for: ${deviceId}`);
+        if (typeof S2 !== 'undefined') {
+            S2.emit('MFC_RASPI_COMMAND_TARGETED', {
+                raspiId: deviceId,
+                command: { action: 'get_status' }
+            });
+            addMessageToLog(`Requesting Raspberry Pi status for ${deviceId}...`, "info");
+        } else {
+            console.error("Socket connection not available");
+            addMessageToLog("Error: Socket connection not available", "error");
+        }
+    }
+
+    function sendRaspiCommand(deviceId, command) {
+        console.log(`Sending command '${command}' to Raspberry Pi: ${deviceId}`);
+        if (typeof S2 !== 'undefined') {
+            S2.emit('MFC_RASPI_COMMAND_TARGETED', {
+                raspiId: deviceId,
+                command: { action: command }
+            });
+            addMessageToLog(`Sent command '${command}' to Raspberry Pi ${deviceId}`, "sent");
+        } else {
+            console.error("Socket connection not available");
+            addMessageToLog("Error: Socket connection not available", "error");
+        }
+    }
+
+
+    /* moved to main AVFX page
+            // Function to clear messages
+            function clearMessages() {
+                const messageList = document.getElementById('messageList');
+                messageList.innerHTML = "No messages yet...";
+            }*/
+
+    // Function to add messages to the Communication Log
+    function addMessageToLog(message, type = "info") {
+        const messageList = document.getElementById('messageList');
+        const timestamp = new Date().toLocaleTimeString();
+        const messageClass = type === "error" ? "color: red;" :
+            type === "sent" ? "color: blue;" :
+                type === "received" ? "color: green;" : "";
+
+        const messageHTML = `<div style="${messageClass}"><strong>[${timestamp}]</strong> ${message}</div>`;
+
+        if (messageList.innerHTML === "No messages yet...") {
+            messageList.innerHTML = messageHTML;
+        } else {
+            messageList.innerHTML = messageHTML + messageList.innerHTML;
+        }
+
+        // Limit to last 50 messages
+        const messages = messageList.querySelectorAll('div');
+        if (messages.length > 50) {
+            messageList.removeChild(messages[messages.length - 1]);
+        }
+
+        // Console logging based on message type
+        const logMessage = `[${timestamp}] ${message}`;
+        switch (type) {
+            case "error":
+                console.error(logMessage);
+                break;
+            case "sent":
+            case "received":
+                console.log(logMessage);
+                break;
+            default:
+                console.info(logMessage);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // SIO 
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    // Listen for responses if S2 is available
+    if (typeof S2 !== 'undefined') {
+        // Multi-ESP32 integration disabled for now
+
+        // Register SocketIO listeners for Raspberry Pi communication
+        S2.on('RASPI_RESPONSE', function (data) {
+            console.log('Raspberry Pi Response: ', data);
+
+            // Extract raspiId from the message or from the 'from' field
+            const raspiId = data.message?.raspiId || (data.from ? data.from.replace('RASPI_', '') : null);
+            const action = data.action;
+            const message = data.message;
+
+            if (raspiId) {
+                addMessageToLog(`[${raspiId}] ${action}: ${JSON.stringify(message)}`, "received");
+
+                // Handle different action types
+                switch (action) {
+                    case 'DISCONNECTED':
+                        // Mark device as disconnected
+                        updateRaspiStatus(raspiId, { connected: false, status: 'Disconnected' });
+                        addMessageToLog(`Raspberry Pi ${raspiId} disconnected`, "error");
+                        break;
+
+                    case 'CONNECTED':
+                        // Mark device as connected (if this event exists)
+                        updateRaspiStatus(raspiId, { connected: true, status: 'Connected' });
+                        addMessageToLog(`Raspberry Pi ${raspiId} connected`, "info");
+                        break;
+
+                    default:
+                        // Regular message - update with message data
+                        updateRaspiStatus(raspiId, message);
+                        break;
+                }
+            } else {
+                addMessageToLog(`Raspberry Pi: ${action}: ${JSON.stringify(message)}`, "received");
+            }
+        });
+
+        // Register for status responses
+        S2.on('RASPI_STATUS_RESPONSE', function (statusData) {
+            console.log('All Raspberry Pi Status:', statusData);
+            Object.keys(statusData).forEach(raspiId => {
+                updateRaspiConnectionStatus(raspiId, statusData[raspiId]);
+            });
+        });
+
+        console.log("Device SocketIO listeners registered");
+
+        // Request initial status after a short delay
+        setTimeout(() => {
+            getESPStatus();
+            // Request status for all Raspberry Pis
+            S2.emit('RASPI_STATUS_REQUEST_ALL');
+        }, 2000);
+    } else {
+        console.warn("S2 socket not available - device communication disabled");
+        addMessageToLog("Warning: Socket connection not available", "error");
+    }
+
+    // ESP32 device-specific functions removed - using legacy single ESP32 system
+
+    function updateRaspiStatus(deviceId, data) {
+        const timestamp = new Date().toLocaleTimeString();
+
+        // Update connection status
+        const connectionElement = document.getElementById(`connectionState_${deviceId}`);
+        if (connectionElement && data.connected !== undefined) {
+            connectionElement.textContent = data.connected ? 'Connected' : 'Disconnected';
+            connectionElement.className = `device-value ${data.connected ? 'device-connected' : 'device-disconnected'}`;
+        }
+
+        // Update general status
+        const statusElement = document.getElementById(`status_${deviceId}`);
+        if (statusElement && data.status !== undefined) {
+            statusElement.textContent = data.status;
+            statusElement.className = `device-value device-${data.status === 'online' ? 'connected' : 'unknown'}`;
+        }
+
+        // Update timestamp
+        const timeElement = document.getElementById(`lastUpdateTime_${deviceId}`);
+        if (timeElement) {
+            timeElement.textContent = timestamp;
+        }
+    }
+
+    function updateRaspiConnectionStatus(deviceId, statusData) {
+        const timestamp = new Date().toLocaleTimeString();
+
+        // Update connection status
+        const connectionElement = document.getElementById(`connectionState_${deviceId}`);
+        if (connectionElement) {
+            connectionElement.textContent = statusData.connected ? 'Connected' : 'Disconnected';
+            connectionElement.className = `device-value ${statusData.connected ? 'device-connected' : 'device-disconnected'}`;
+        }
+
+        // Update timestamp
+        const timeElement = document.getElementById(`lastUpdateTime_${deviceId}`);
+        if (timeElement) {
+            timeElement.textContent = timestamp;
+        }
+    }
+</script>
+</div>

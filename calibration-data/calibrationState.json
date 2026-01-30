@@ -1,0 +1,79 @@
+{
+  "orientation": {
+    "cassette153Reference": {
+      "x": -235.23,
+      "y": -623.08,
+      "z": 339.49,
+      "capturedAt": "2025-11-04T19:43:58.393Z"
+    },
+    "cassette1Reference": {
+      "x": -234.83,
+      "y": 641.6,
+      "z": 311.21,
+      "capturedAt": "2025-11-04T19:43:20.017Z"
+    },
+    "cassette153Corner": {
+      "x": -234.81,
+      "y": -627.91,
+      "z": 221.59,
+      "capturedAt": "2025-11-04T19:44:25.588Z"
+    },
+    "vectorLengthMm": 4.848,
+    "alphaDeg": 0.219591,
+    "verified": true,
+    "lastComputedAt": "2025-11-04T19:44:25.588Z",
+    "verification": {
+      "stage": null,
+      "cassette1Confirmed": true,
+      "cassette153Confirmed": true,
+      "cassette1Pose": {
+        "x": -212.59,
+        "y": 669.19,
+        "z": 211.31,
+        "capturedAt": "2025-11-04T19:45:49.462Z"
+      },
+      "cassette153Pose": {
+        "x": -207.7,
+        "y": -595.8,
+        "z": 240,
+        "capturedAt": "2025-11-04T19:46:16.478Z"
+      }
+    }
+  },
+  "translation": {
+    "cassette1Reference": {
+      "x": -212.6,
+      "y": 669.2,
+      "z": 191.3,
+      "capturedAt": "2025-11-04T20:01:32.453Z"
+    },
+    "cassette1Aligned": {
+      "x": -202.9,
+      "y": 669.18,
+      "z": 191.43,
+      "capturedAt": "2025-11-04T20:01:39.960Z"
+    },
+    "offsetXmm": 9.7,
+    "offsetYmm": -0.02,
+    "verified": false,
+    "lastComputedAt": "2025-11-04T20:01:39.961Z"
+  },
+  "workflow": {
+    "orientation": {
+      "gotoComplete": true,
+      "alignmentReady": true,
+      "travelReady": true,
+      "travelComplete": true,
+      "baselineCaptured": true,
+      "cornerCaptured": true,
+      "verified": true
+    },
+    "translation": {
+      "gotoComplete": true,
+      "referenceCaptured": true,
+      "alignedCaptured": true,
+      "verified": false
+    }
+  },
+  "lastUpdatedAt": "2025-11-04T20:01:39.961Z"
+}

@@ -1,0 +1,40 @@
+{
+  "orientation": {
+    "cassette1Reference": null,
+    "cassette153Corner": null,
+    "vectorLengthMm": null,
+    "alphaDeg": null,
+    "verified": false,
+    "lastComputedAt": null,
+    "verification": {
+      "stage": null,
+      "cassette1Confirmed": false,
+      "cassette153Confirmed": false
+    }
+  },
+  "translation": {
+    "cassette1Reference": null,
+    "cassette1Aligned": null,
+    "offsetXmm": null,
+    "offsetYmm": null,
+    "verified": false,
+    "lastComputedAt": null
+  },
+  "workflow": {
+    "orientation": {
+      "gotoComplete": false,
+      "alignmentReady": false,
+      "travelComplete": false,
+      "baselineCaptured": false,
+      "cornerCaptured": false,
+      "verified": false
+    },
+    "translation": {
+      "gotoComplete": false,
+      "referenceCaptured": false,
+      "alignedCaptured": false,
+      "verified": false
+    }
+  },
+  "lastUpdatedAt": null
+}

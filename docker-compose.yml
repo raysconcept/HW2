@@ -1,0 +1,66 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: hotwheels-app:latest
+    env_file: .env.docker
+    environment:
+      - HW_CALIBRATION_STATE_PATH=/app/calibration-data/calibrationState.json
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${HW_SERVER_IP_HOST}:3101:3101" # HTTP
+      - "${HW_SERVER_IP_HOST}:3002:3002" # ESP TCP
+    volumes:
+      - logs:/app/logs
+      - ./public:/app/public
+      - ./calibration-data:/app/calibration-data
+      # Share robot config so calibrationAngleDEG persists on host and container
+      #- ./src/server/config/configRobot/HW_robot_config.js:/app/src/server/config/configRobot/HW_robot_config.js:rw
+      - ./src/server/config/configRobot.js:/app/src/server/config/configRobot.js:rw
+
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    env_file: .env.docker
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql # makes DB isn't lost if volumes are deleted inside the container
+      - ./database_update/hw11_2_jazan.sql:/docker-entrypoint-initdb.d/inist.sql:ro
+      - ./database_update/hw11_dev.sql:/docker-entrypoint-initdb.d/02_hw11_dev.sql:ro
+      - ./database_update/03_grants.sql:/docker-entrypoint-initdb.d/03_grants.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - phpmyadmin_data:/var/www/html
+      - phpmyadmin_sessions:/sessions
+
+volumes:
+  logs:
+  qr:
+  qr_operator:
+  video:
+  mysql_data:
+  phpmyadmin_data:
+  phpmyadmin_sessions:

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<!--
+WINDOWS DEPLOYMENT SUPPORT PAGE FOR HOTWHEELS
+-->
+<head>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOTWHEELS WINDOWS DEPLOYMENT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f96801 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 980px;
+            width: 100%;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            color: white;
+            padding: 28px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .section {
+            padding: 24px 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            color: #2575fc;
+            margin-bottom: 12px;
+        }
+
+        .section h3 {
+            font-size: 16px;
+            color: #333;
+            margin: 12px 0 8px;
+        }
+
+        .section ul,
+        .section ol {
+            margin-left: 20px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        .code-block {
+            background: #f6f7fb;
+            border: 1px solid #e1e4ef;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-top: 10px;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .note {
+            background: #f9fbff;
+            border-left: 4px solid #2575fc;
+            padding: 10px 12px;
+            margin-top: 12px;
+            color: #333;
+        }
+
+        .link-list a {
+            color: #2575fc;
+            text-decoration: none;
+        }
+
+        .link-list a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 18px;
+            background-color: #f9f9f9;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hwlogo_client"><img src="HWLOGO.png" style="position:absolute; top:0;width:20%;"></div>
+    <div class="container">
+        <div class="header">
+            <h1>Windows Deployment (OptiPlex 3020)</h1>
+            <p>Connectivity, tooling, and Docker setup for the Hot Wheels project stack.</p>
+        </div>
+
+        <div class="section">
+            <h2>1. Connectivity</h2>
+            <ul>
+                <li>Connect the OptiPlex to the Ubuntu laptop (Wi-Fi on laptop, Ethernet between machines).</li>
+                <li>A direct Ethernet connection to the OptiPlex machine can also be used. If it is not available, share internet from your Ubuntu developer PC.</li>
+                <li>On Ubuntu: Settings -&gt; Network -&gt; Wired -&gt; gear icon -&gt; IPv4 -&gt; set Shared to other computers.</li>
+                <li>On Windows (PowerShell as Admin):</li>
+            </ul>
+            <pre class="code-block"><code>ipconfig /release
+ipconfig /renew
+ipconfig</code></pre>
+            <div class="note">Expect 10.42.0.x with gateway 10.42.0.1.</div>
+            <ul>
+                <li>On Ubuntu: run the share-internet.sh script.</li>
+                <li>Verify internet reachability: ping 10.42.0.1 and ping 8.8.8.8.</li>
+                <li>Restart the Ubuntu machine.</li>
+            </ul>
+        </div>
+
+        <div class="section link-list">
+            <h2>2. Tooling</h2>
+            <ul>
+                <li>Open PowerShell as Administrator.</li>
+                <li>Copy download-install-winget.ps1 from the flash drive to the Desktop and run it.</li>
+                <li>Copy install-git-docker.ps1 from the flash drive to the Desktop and run it.</li>
+                <li>If either script returns errors, install Git and Docker manually using the links below.
+                    <ul>
+                        <li>Docker Desktop (Linux containers): <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">https://www.docker.com/products/docker-desktop/</a></li>
+                        <li>Git for Windows: <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">https://git-scm.com/download/win</a></li>
+                        <li>Visual Studio Code (optional): <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">https://code.visualstudio.com/</a></li>
+                    </ul>
+                </li>
+                <li>If Docker warns about WSL: run elevated PowerShell <code>wsl --update</code> and reboot if requested.</li>
+                <li>Confirm architecture if you are unsure which installer to download: <code>wmic os get osarchitecture</code> (or <code>systeminfo | find "System Type"</code>).</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>3. Clone via SSH</h2>
+            <ol>
+                <li>Generate key (Git Bash):</li>
+            </ol>
+            <pre class="code-block"><code>ssh-keygen -t ed25519 -C "optiplex-hw"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+clip &lt; ~/.ssh/id_ed25519.pub</code></pre>
+            <ol start="2">
+                <li>Paste the public key into GitHub (account SSH keys or repo deploy keys).</li>
+                <li>Test: <code>ssh -T git@github.com</code>.</li>
+                <li>Clone:</li>
+            </ol>
+            <pre class="code-block"><code>mkdir C:\Projects
+cd C:\Projects
+git clone git@github.com:ORG/REPO.git</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>4. Hardware Reachability</h2>
+            <ul>
+                <li>Ensure OptiPlex can reach controllers: <code>ping 192.168.1.11</code>, <code>ping 192.168.1.20</code>.</li>
+                <li>Adjust routing or Docker networking (<code>network_mode: host</code>) if the container later fails to connect.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>5. Run Containers</h2>
+            <pre class="code-block"><code>docker compose --env-file .env.docker build
+docker compose --env-file .env.docker up</code></pre>
+            <ul>
+                <li>Follow logs: <code>docker compose logs -f app</code>.</li>
+                <li>Access UI: <code>http://192.168.1.2:3101/HW</code>.</li>
+                <li>Watch for hardware connection success messages in the logs.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Windows Troubleshooting</h2>
+            <ul>
+                <li><strong>npm ci fails during build</strong> - ensure package-lock.json is present in the repository (remove it from .gitignore if necessary). Docker copies the lock file into the image so dependencies install deterministically.</li>
+                <li><strong>Entrypoint reports no such file</strong> - Windows converts shell scripts to CRLF. Reconvert with <code>tr -d '\r' &lt; scripts/docker-entrypoint.sh &gt; scripts/docker-entrypoint.tmp &amp;&amp; mv scripts/docker-entrypoint.tmp scripts/docker-entrypoint.sh &amp;&amp; chmod +x scripts/docker-entrypoint.sh</code>, or disable Git CRLF conversion (<code>git config core.autocrlf false</code>) before rebuilding.</li>
+                <li><strong>MySQL container stuck "unhealthy"</strong> - adjust the healthcheck to use <code>mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD</code>. If HOST is not allowed appears, reset the DB volume (<code>docker compose down -v</code>) so the seed script re-creates grants, or grant <code>'hotwheels'@'%'</code> manually.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Prerequisites</h2>
+            <ul>
+                <li>Windows 10/11 with admin access.</li>
+                <li>Docker Desktop (WSL2 backend enabled).</li>
+                <li>Git or a zip of the project sources.</li>
+                <li>Access to the same LAN as the robot/ESP hardware (wired or via shared connection).</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Internet Access via Ubuntu Bridge</h2>
+            <p>If the OptiPlex lacks Wi-Fi, you can borrow connectivity from an Ubuntu laptop:</p>
+            <ol>
+                <li>On Ubuntu: connect to Wi-Fi, plug the Ethernet cable between laptop and OptiPlex.</li>
+                <li>Open Settings -&gt; Network, select the wired connection, click the gear icon.</li>
+                <li>In the IPv4 tab choose Shared to other computers, save, then toggle the wired connection off/on.</li>
+                <li>On Windows: connect the Ethernet cable, then open Opdrachtprompt and run:</li>
+            </ol>
+            <pre class="code-block"><code>ipconfig /release
+ipconfig /renew
+ipconfig</code></pre>
+            <div class="note">You should receive a 10.42.x.x address (Ubuntu's shared subnet). Verify connectivity with ping 10.42.0.1.</div>
+        </div>
+
+        <div class="section">
+            <h2>Docker Compose on Windows</h2>
+            <p>If Docker Desktop reports that the WSL kernel is outdated, open an elevated PowerShell window and run:</p>
+            <pre class="code-block"><code>wsl --update</code></pre>
+            <ol>
+                <li>Clone or copy the project to the PC (e.g. <code>C:\Projects\HOTWHEELS</code>).</li>
+                <li>Review <code>.env.docker</code> and update IPs/credentials (robot, ESP, exposed ports) if they differ.</li>
+                <li>In PowerShell or Command Prompt run:</li>
+            </ol>
+            <pre class="code-block"><code>cd C:\Projects\HOTWHEELS
+docker compose --env-file .env.docker build
+docker compose --env-file .env.docker up</code></pre>
+            <ol start="4">
+                <li>Monitor the stack with <code>docker compose logs -f app</code>; you should see "System ready" once MySQL and hardware connections succeed.</li>
+                <li>Access the UI at <code>http://localhost:3101/HW</code> and confirm robot/ESP connectivity.</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>Notes</h2>
+            <ul>
+                <li>Bind mounts in docker-compose.yml use Docker named volumes by default; adjust to host paths if operators need file access (logs, QR codes, video output).</li>
+                <li>If the robot is on a different subnet, consider <code>network_mode: host</code> or additional routing; otherwise the default NAT bridge can reach 192.168.x.x networks.</li>
+                <li>For native (non-docker) runs on Windows, source .env.local equivalents and ensure the hotwheels@localhost MySQL user exists as described in the Local MySQL Setup section.</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            For support questions, email info@rays.nl.
+        </div>
+    </div>
+</body>
+</html>

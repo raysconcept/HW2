@@ -1,0 +1,968 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<title>AVFX - ESP32 LED Controller</title>
+
+<body>
+    <!-- Header with Logo -->
+    <!-- <div class="hwlogo_avfx"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div> -->
+    <div class="blockHeader">AV FX Control</div>
+
+    <!-- Main Content Container -->
+    <div class="avfx-main-container">
+        <!-- Control Buttons Section -->
+        <div class="avfx-controls">
+            <div class="btnWide" onclick="avfx1()">RUN LEDS ROBOTWHEEL (RED)</div>
+            <div class="btnWide" onclick="avfx2()">RUN LEDS LOOPINGS (GREEN)</div>
+            <div class="btnWide" onclick="avfx3()">RUN LEDS CRASHZONE (BLUE)</div>
+            <div class="btnWide" onclick="avfx4()">RUN LEDS BONUS (WHITE)</div>
+            <div class="btnWide" onclick="avfx5()">RUN LEDS UTURN (OFF)</div>
+            <div class="btnWide" onclick="avfx6()">RUN SMOKE MACHINE (LED ON)</div>
+
+            <div class="btnWide" onclick="getESPStatus()">GET ESP32 STATUS</div>
+            <div class="btnWide" onclick="turnOffAll()">TURN OFF ALL</div>
+        </div>
+
+        <!-- Single ESP32 Status Panel (Legacy) -->
+        <div id="espStatusPanel" class="esp-status-container">
+            <div class="esp-status-header">ESP32 Status Monitor</div>
+            <div class="esp-status-content">
+                <div>Connection: <span id="connectionState" class="esp-value esp-unknown">Unknown</span></div>
+                <div>LED Status: <span id="ledState" class="esp-value esp-unknown">Unknown</span></div>
+                <div>RGB LED: <span id="rgbState" class="esp-value esp-unknown">Unknown</span></div>
+                <div>Last Update: <span id="lastUpdateTime" class="esp-value">Never</span></div>
+                <button onclick="getESPStatus()" class="esp-refresh-btn">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Raspberry Pi Devices Section -->
+        <div class="devices-section">
+            <div class="section-header">Raspberry Pi Devices</div>
+            <div class="devices-grid">
+                <% GLOBALS.config.deviceConfig.raspberryPiDevices.forEach(raspi=> { %>
+                    <div id="raspiStatusPanel_<%= raspi.id %>" class="device-status-container">
+                        <div class="device-status-header">
+                            <%= raspi.name %> (<%= raspi.id %>)
+                                    <span class="device-type-badge device-type-<%= raspi.type %>">
+                                        <%= raspi.type %>
+                                    </span>
+                        </div>
+                        <div class="device-status-content">
+                            <div class="device-info">
+                                <div>Host: <span class="device-value">
+                                        <%= raspi.host %>:<%= raspi.port %>
+                                    </span></div>
+                                <div>Description: <span class="device-description">
+                                        <%= raspi.description %>
+                                    </span></div>
+                            </div>
+                            <div class="device-status">
+                                <div>Connection: <span id="connectionState_<%= raspi.id %>"
+                                        class="device-value device-unknown">Unknown</span></div>
+                                <div>Status: <span id="status_<%= raspi.id %>"
+                                        class="device-value device-unknown">Unknown</span></div>
+                                <div>Last Update: <span id="lastUpdateTime_<%= raspi.id %>"
+                                        class="device-value">Never</span></div>
+                            </div>
+                            <div class="device-controls">
+                                <button onclick="getRaspiStatus('<%= raspi.id %>')" class="device-refresh-btn">🔄
+                                    Status</button>
+                                <button onclick="sendRaspiCommand('<%= raspi.id %>', 'ping')" class="device-cmd-btn">📡
+                                    Ping</button>
+                                <button onclick="sendRaspiCommand('<%= raspi.id %>', 'restart')"
+                                    class="device-cmd-btn">🔄 Restart</button>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+            </div>
+        </div>
+
+        <!-- Global Messages Panel -->
+        <div id="deviceMessages" class="device-messages-container">
+            <div class="device-messages-header">Device Communication Log</div>
+            <div id="messageList" class="device-messages-content">No messages yet...</div>
+            <button onclick="clearMessages()" class="device-clear-btn">🗑️ Clear Messages</button>
+        </div>
+    </div>
+
+    <style>
+        /* Override global overflow hidden to allow scrolling */
+        html,
+        body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        /* Main Container - Natural flow */
+        .avfx-main-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            /* Allow natural content flow for scrolling */
+        }
+
+        /* Control Buttons Section */
+        .avfx-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .avfx-controls .btnWide {
+            width: 100%;
+            min-width: 250px;
+            box-sizing: border-box;
+        }
+
+        /* New Device Styles for Multiple ESP32 and Raspberry Pi Devices */
+
+        /* Devices Section Styles */
+        .devices-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: #2980b9;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* Device Status Container */
+        .device-status-container {
+            background: #34495e;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid #3498db;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-status-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e67e22;
+            animation: device-pulse 2s ease-in-out infinite alternate;
+        }
+
+        .device-status-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .device-type-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .device-type-lighting {
+            background-color: #e67e22;
+            color: white;
+        }
+
+        .device-type-sensors {
+            background-color: #2980b9;
+            color: white;
+        }
+
+        .device-type-effects {
+            background-color: #d35400;
+            color: white;
+        }
+
+        .device-type-camera {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .device-type-audio {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .device-type-display {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .device-type-control {
+            background-color: #2980b9;
+            color: white;
+        }
+
+        .device-status-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .device-info,
+        .device-status {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .device-info>div,
+        .device-status>div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .device-value {
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .device-description {
+            font-style: italic;
+            color: #bdc3c7;
+            font-size: 12px;
+        }
+
+        .device-connected {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .device-disconnected {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .device-red {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .device-green {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .device-blue {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .device-white {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .device-off {
+            background-color: #34495e;
+            color: #bdc3c7;
+        }
+
+        .device-unknown {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .device-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .device-refresh-btn,
+        .device-cmd-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .device-refresh-btn:hover,
+        .device-cmd-btn:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        /* Messages Panel */
+        .device-messages-container {
+            background: #34495e;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid #95a5a6;
+        }
+
+        .device-messages-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .device-messages-content {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #bdc3c7;
+            line-height: 1.4;
+        }
+
+        .device-clear-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .device-clear-btn:hover {
+            background: #c0392b;
+        }
+
+        @keyframes device-pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Legacy ESP32 Status Container - Similar to robot_status_container */
+        .esp-status-container {
+            background-color: orange;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            white-space: nowrap;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        .esp-status-header {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #333;
+            display: block;
+        }
+
+        .esp-status-content {
+            display: inline-flex;
+            gap: 15px;
+            white-space: nowrap;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .esp-status-content div {
+            padding: 8px 12px;
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            display: inline-block;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .esp-value {
+            font-family: monospace;
+            color: #0066cc;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+
+        .esp-unknown {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+        }
+
+        .esp-connected {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .esp-disconnected {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .esp-on {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .esp-off {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .esp-red {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .esp-green {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .esp-blue {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .esp-white {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+        }
+
+        .esp-refresh-btn {
+            background: rgba(52, 152, 219, 0.8);
+            border: 1px solid #3498db;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .esp-refresh-btn:hover {
+            background: rgba(52, 152, 219, 1);
+        }
+
+        /* ESP32 Messages Container */
+        .esp-messages-container {
+            background-color: #34495e;
+            border: 1px solid #2c3e50;
+            border-radius: 4px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+            /* Fixed height instead of flex: 1 */
+        }
+
+        .esp-messages-header {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: white;
+            display: block;
+            flex-shrink: 0;
+            /* Prevent header from shrinking */
+        }
+
+        .esp-messages-content {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            min-height: 200px;
+        }
+
+        .esp-messages-content div {
+            margin-bottom: 5px;
+            padding: 5px 8px;
+            border-radius: 3px;
+            border-left: 3px solid #bdc3c7;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .esp-messages-content div[style*="color: red"] {
+            border-left-color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .esp-messages-content div[style*="color: blue"] {
+            border-left-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .esp-messages-content div[style*="color: green"] {
+            border-left-color: #27ae60;
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+
+        .esp-clear-btn {
+            background: rgba(231, 76, 60, 0.8);
+            border: 1px solid #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+            align-self: flex-start;
+            flex-shrink: 0;
+            /* Prevent button from shrinking */
+            margin-top: auto;
+            /* Push button to bottom of container */
+        }
+
+        .esp-clear-btn:hover {
+            background: rgba(231, 76, 60, 1);
+        }
+
+        /* Animation for status updates */
+        .esp-status-content div.updated {
+            animation: statusUpdate 0.5s ease-in-out;
+        }
+
+        @keyframes statusUpdate {
+            0% {
+                background-color: rgba(52, 152, 219, 0.3);
+            }
+
+            100% {
+                background-color: #fff;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .avfx-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .esp-status-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+
+    <script>
+        // ESP32 command functions
+        function avfx1() {
+            sendESPCommand('rgb_red', 'AVFX1');
+        }
+
+        function avfx2() {
+            sendESPCommand('rgb_green', 'AVFX');
+        }
+
+        function avfx3() {
+            sendESPCommand('rgb_blue', 'AVFX');
+        }
+
+        function avfx4() {
+            sendESPCommand('rgb_white', 'AVFX');
+        }
+
+        function avfx5() {
+            sendESPCommand('rgb_off', 'AVFX');
+        }
+
+        function avfx6() {
+            sendESPCommand('led_on', 'AVFX');
+        }
+
+        // Raspberry Pi device-specific functions
+
+        function getRaspiStatus(deviceId) {
+            console.log(`Requesting Raspberry Pi status for: ${deviceId}`);
+            if (typeof S2 !== 'undefined') {
+                S2.emit('MFC_RASPI_COMMAND_TARGETED', {
+                    raspiId: deviceId,
+                    command: { action: 'get_status' }
+                });
+                addMessageToLog(`Requesting Raspberry Pi status for ${deviceId}...`, "info");
+            } else {
+                console.error("Socket connection not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+        function sendRaspiCommand(deviceId, command) {
+            console.log(`Sending command '${command}' to Raspberry Pi: ${deviceId}`);
+            if (typeof S2 !== 'undefined') {
+                S2.emit('MFC_RASPI_COMMAND_TARGETED', {
+                    raspiId: deviceId,
+                    command: { action: command }
+                });
+                addMessageToLog(`Sent command '${command}' to Raspberry Pi ${deviceId}`, "sent");
+            } else {
+                console.error("Socket connection not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+        // Legacy function for backward compatibility
+        function getESPStatus() {
+            console.log("Requesting ESP32 status (legacy)");
+            if (typeof S2 !== 'undefined') {
+                S2.emit('ESP_STATUS_REQUEST');
+                addMessageToLog("Requesting ESP32 status...", "info");
+            } else {
+                console.error("Socket connection not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+        function turnOffAll() {
+            console.log("Turning off all LEDs");
+            sendESPCommand('led_off', 'LED_OFF');
+            setTimeout(() => {
+                sendESPCommand('rgb_off', 'RGB_OFF');
+            }, 100);
+        }
+
+        // Function to clear messages
+        function clearMessages() {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = "No messages yet...";
+        }
+
+        // Function to add messages to the Communication Log
+        function addMessageToLog(message, type = "info") {
+            const messageList = document.getElementById('messageList');
+            const timestamp = new Date().toLocaleTimeString();
+            const messageClass = type === "error" ? "color: red;" :
+                type === "sent" ? "color: blue;" :
+                    type === "received" ? "color: green;" : "";
+
+            const messageHTML = `<div style="${messageClass}"><strong>[${timestamp}]</strong> ${message}</div>`;
+
+            if (messageList.innerHTML === "No messages yet...") {
+                messageList.innerHTML = messageHTML;
+            } else {
+                messageList.innerHTML = messageHTML + messageList.innerHTML;
+            }
+
+            // Limit to last 50 messages
+            const messages = messageList.querySelectorAll('div');
+            if (messages.length > 50) {
+                messageList.removeChild(messages[messages.length - 1]);
+            }
+
+            // Console logging based on message type
+            const logMessage = `[${timestamp}] ${message}`;
+            switch (type) {
+                case "error":
+                    console.error(logMessage);
+                    break;
+                case "sent":
+                case "received":
+                    console.log(logMessage);
+                    break;
+                default:
+                    console.info(logMessage);
+            }
+        }
+
+        // Function to update ESP32 status display
+        function updateESPStatus(data) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            if (data.ethernet_connected !== undefined) {
+                const connectionElement = document.getElementById('connectionState');
+                const newStatus = data.ethernet_connected ? 'Connected' : 'Disconnected';
+                const newClass = data.ethernet_connected ? 'esp-connected' : 'esp-disconnected';
+
+                if (connectionElement.textContent !== newStatus) {
+                    connectionElement.textContent = newStatus;
+                    connectionElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(connectionElement.parentElement);
+                }
+            }
+
+            if (data.led_status !== undefined) {
+                const ledElement = document.getElementById('ledState');
+                const newStatus = data.led_status ? 'ON' : 'OFF';
+                const newClass = data.led_status ? 'esp-on' : 'esp-off';
+
+                if (ledElement.textContent !== newStatus) {
+                    ledElement.textContent = newStatus;
+                    ledElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(ledElement.parentElement);
+                }
+            }
+
+            if (data.rgb_led_status !== undefined) {
+                const rgbElement = document.getElementById('rgbState');
+                const newStatus = data.rgb_led_status.toUpperCase();
+                const colorMap = {
+                    'red': 'esp-red',
+                    'green': 'esp-green',
+                    'blue': 'esp-blue',
+                    'white': 'esp-white',
+                    'off': 'esp-off'
+                };
+                const newClass = colorMap[data.rgb_led_status] || 'esp-unknown';
+
+                if (rgbElement.textContent !== newStatus) {
+                    rgbElement.textContent = newStatus;
+                    rgbElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(rgbElement.parentElement);
+                }
+            }
+
+            document.getElementById('lastUpdateTime').textContent = timestamp;
+        }
+
+        // Function to animate status updates
+        function animateStatusUpdate(element) {
+            element.classList.add('updated');
+            setTimeout(() => {
+                element.classList.remove('updated');
+            }, 500);
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // ESP Communication (commands sent to the ESP)
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        // Generic function to send ESP32 commands
+        function sendESPCommand(command, source = '') {
+            if (typeof S2 !== 'undefined') {
+                const commandObj = { command: command };
+                // console.log(`Sending ESP32 command (${source}):`, commandObj);
+
+                // Send via new ESP_COMMAND event
+                S2.emit('MFC_ESP_COMMAND', commandObj);
+
+                // Also send via traditional MFO
+                // let terminal = "AVFX";
+                // let action = source || command.toUpperCase();
+                // let message = `ESP32 command: ${command}`;
+                // let MSG = terminal + "___" + action + "___" + message;
+                // S2.emit('MFC', MSG);
+
+                addMessageToLog(`Sent command: ${command}`, "sent");
+            } else {
+                console.error("Socket connection (S2) not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // SIO ESP setup (responses received from the ESP)
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        // Listen for ESP32 responses if S2 is available
+        if (typeof S2 !== 'undefined') {
+            // Listen for ESP32 responses 'ESP_RESPONSE'
+            S2.on('ESP_RESPONSE', function (data) {
+                console.log('ESP32 Response: ', data);
+
+                addMessageToLog(`${data.action}: ${JSON.stringify(data.message)}`, "received");
+
+                // Update status display if this is a status update
+                if (data.action === 'status_update' && data.message) {
+                    updateESPStatus(data.message);
+                }
+
+                // Handle specific message types
+                switch (data.action) {
+                    case 'welcome':
+                        addMessageToLog(`ESP32 Connected: ${data.message.message}`, "received");
+                        break;
+
+                    case 'response':
+                        addMessageToLog(`Command '${data.message.command}' executed: ${data.message.message}`, "received");
+                        break;
+
+                    case 'DISCONNECTED':
+                        addMessageToLog("ESP32 disconnected", "error");
+
+                        // Update connection state
+                        const connectionElement = document.getElementById('connectionState');
+                        connectionElement.textContent = 'Disconnected';
+                        connectionElement.className = 'esp-value esp-disconnected';
+
+                        // Update legacy status display if available
+                        if (document.getElementById("DIV_ESP_STATUS")) {
+                            document.getElementById("DIV_ESP_STATUS").innerHTML =
+                                `[${new Date().toLocaleTimeString()}] ESP32 DISCONNECTED`;
+                        }
+                        break;
+
+                    case "status_update":
+                        // Update legacy status display if available
+                        if (document.getElementById("DIV_ESP_STATUS")) {
+                            const timestamp = new Date().toLocaleTimeString();
+                            document.getElementById("DIV_ESP_STATUS").innerHTML =
+                                `[${timestamp}] ${data.action}: ${JSON.stringify(data.message)}`;
+                        }
+
+                        if (document.getElementById("DIV_ESP_STATUS_DETAIL")) {
+                            const status = data.message;
+                            document.getElementById("DIV_ESP_STATUS_DETAIL").innerHTML = `
+                  <div>Connection: ${status.ethernet_connected ? 'Connected' : 'Disconnected'}</div>
+                  <div>RGB LED: ${status.rgb_led_status}</div>
+                  <div>Timestamp: ${status.timestamp}ms</div>
+               `;
+                        }
+                        break;
+                }
+            });
+
+            // Multi-ESP32 integration disabled for now
+
+            // Register SocketIO listeners for Raspberry Pi communication
+            S2.on('RASPI_RESPONSE', function (data) {
+                console.log('Raspberry Pi Response: ', data);
+
+                // Extract raspiId from the message or from the 'from' field
+                const raspiId = data.message?.raspiId || (data.from ? data.from.replace('RASPI_', '') : null);
+                const action = data.action;
+                const message = data.message;
+
+                if (raspiId) {
+                    addMessageToLog(`[${raspiId}] ${action}: ${JSON.stringify(message)}`, "received");
+
+                    // Handle different action types
+                    switch (action) {
+                        case 'DISCONNECTED':
+                            // Mark device as disconnected
+                            updateRaspiStatus(raspiId, { connected: false, status: 'Disconnected' });
+                            addMessageToLog(`Raspberry Pi ${raspiId} disconnected`, "error");
+                            break;
+
+                        case 'CONNECTED':
+                            // Mark device as connected (if this event exists)
+                            updateRaspiStatus(raspiId, { connected: true, status: 'Connected' });
+                            addMessageToLog(`Raspberry Pi ${raspiId} connected`, "info");
+                            break;
+
+                        default:
+                            // Regular message - update with message data
+                            updateRaspiStatus(raspiId, message);
+                            break;
+                    }
+                } else {
+                    addMessageToLog(`Raspberry Pi: ${action}: ${JSON.stringify(message)}`, "received");
+                }
+            });
+
+            // Register for status responses
+            S2.on('RASPI_STATUS_RESPONSE', function (statusData) {
+                console.log('All Raspberry Pi Status:', statusData);
+                Object.keys(statusData).forEach(raspiId => {
+                    updateRaspiConnectionStatus(raspiId, statusData[raspiId]);
+                });
+            });
+
+            console.log("Device SocketIO listeners registered");
+
+            // Request initial status after a short delay
+            setTimeout(() => {
+                getESPStatus();
+                // Request status for all Raspberry Pis
+                S2.emit('RASPI_STATUS_REQUEST_ALL');
+            }, 2000);
+        } else {
+            console.warn("S2 socket not available - device communication disabled");
+            addMessageToLog("Warning: Socket connection not available", "error");
+        }
+
+        // ESP32 device-specific functions removed - using legacy single ESP32 system
+
+        function updateRaspiStatus(deviceId, data) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Update connection status
+            const connectionElement = document.getElementById(`connectionState_${deviceId}`);
+            if (connectionElement && data.connected !== undefined) {
+                connectionElement.textContent = data.connected ? 'Connected' : 'Disconnected';
+                connectionElement.className = `device-value ${data.connected ? 'device-connected' : 'device-disconnected'}`;
+            }
+
+            // Update general status
+            const statusElement = document.getElementById(`status_${deviceId}`);
+            if (statusElement && data.status !== undefined) {
+                statusElement.textContent = data.status;
+                statusElement.className = `device-value device-${data.status === 'online' ? 'connected' : 'unknown'}`;
+            }
+
+            // Update timestamp
+            const timeElement = document.getElementById(`lastUpdateTime_${deviceId}`);
+            if (timeElement) {
+                timeElement.textContent = timestamp;
+            }
+        }
+
+        function updateRaspiConnectionStatus(deviceId, statusData) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Update connection status
+            const connectionElement = document.getElementById(`connectionState_${deviceId}`);
+            if (connectionElement) {
+                connectionElement.textContent = statusData.connected ? 'Connected' : 'Disconnected';
+                connectionElement.className = `device-value ${statusData.connected ? 'device-connected' : 'device-disconnected'}`;
+            }
+
+            // Update timestamp
+            const timeElement = document.getElementById(`lastUpdateTime_${deviceId}`);
+            if (timeElement) {
+                timeElement.textContent = timestamp;
+            }
+        }
+    </script>
+</body>
+
+</html>

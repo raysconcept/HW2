@@ -1,0 +1,40 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<title>BONUS</title>
+
+<body>
+    <div class="hwlogo_ordercue"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+    <div id="DIV_SERIALUPDATE" class="blockContent">SERIALUPDATE</div>
+
+    <form method="POST" action="/HW_OPERATOR_REQUEST" class="" autocomplete="off">
+        <div class="blockContent">
+
+            <!-- RFO send to SIO-->
+            <ul><button type="submit" value="RFO_BONUS_TESTCONNECTION" name="cmnd" class="it_btn">
+                BONUS_TEST_CONNECTION</button></ul>
+
+            <ul><button type="submit" value="RFO_BONUS_GO_TO_TOP" name="cmnd" class="it_btn">
+                    BONUS_GO_TO_TOP</button></ul>
+            <ul><button type="submit" value="RFO_BONUS_GO_TO_HOME" name="cmnd" class="it_btn">
+                    BONUS_GO_TO_HONE</button></ul>
+            <ul><button type="submit" value="RFO_BONUS_PICK_LEVEL_1" name="cmnd" class="it_btn">
+                    BONUS_PICK_LEVEL_1</button></ul>
+            <ul><button type="submit" value="RFO_BONUS_PICK_LEVEL_2" name="cmnd" class="it_btn">
+                    BONUS_PICK_LEVEL_2</button></ul>
+            <ul><button type="submit" value="RFO_BONUS_PICK_LEVEL_3" name="cmnd" class="it_btn">
+                    BONUS_PICK_LEVEL_3</button></ul>
+            <ul><button type="submit" value="RFO_BONUS_PICK_LEVEL_4" name="cmnd" class="it_btn">
+                    BONUS_PICK_LEVEL_4</button></ul>
+
+            <ul><button type="submit" value="RFO_BONUS_TEST" name="cmnd" class="it_btn">
+                    BONUS_TEST</button></ul>
+        </div>
+    </form>
+
+
+</body>
+
+
+</html>

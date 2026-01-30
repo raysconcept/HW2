@@ -1,0 +1,262 @@
+<html lang="en" dir="ltr">
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>HW ORDERS</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <script>
+        const PAGE = "HW ORDERS";
+        // alert(S2);
+
+        function orderQrInterruptedToInCue(orderQrIn) {
+            let c = confirm("move order back to cueLine?");
+            if (c == true) {
+                fetch("/INTERUPTED_ONE_TO_INCUE", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderQr: orderQrIn })
+                });
+
+                alert("reload");
+                SIO_ORDERS_GET_INTERRUPTED();
+            }
+        }
+        function resetDIVS() {
+            document.getElementById("DIV_LIST_ORDERS").innerHTML = "DIV_LIST_ORDERS reset";
+        }
+
+        function SHOW_ORDER_LIST_POPULAR_CARS(list) {
+
+            LIST = "";
+            LIST += "<table width=100%>";
+            LIST += "<tr class=inventory_header><td>POPULAR CARS</td></tr>";
+
+            LIST += "<tr class=inventory_header>";
+            LIST += "<td class=inventory_cell>carType</td>";
+            LIST += "<td class=inventory_cell>totalSold</td>";
+            LIST += "<td class=inventory_cell>lastDay</td>";
+            LIST += "<td class=inventory_cell>lastWeek</td>";
+            LIST += "<td class=inventory_cell>lastMonth</td>";
+            LIST += "<td class=inventory_cell>1 months ago</td>";
+            LIST += "<td class=inventory_cell>2 months ago</td>";
+            LIST += "</tr>";
+            list.forEach(car => {
+                LIST += "<tr>";
+                LIST += "<td class=inventory_cell>" + car.carAssets + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmount + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmountLastDay + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmountLastWeek + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmountMonth1 + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmountMonth2 + "</td>";
+                LIST += "<td class=inventory_cell>" + car.carAmountMonth3 + "</td>";
+                LIST += "</tr>";
+
+            });
+            LIST += "</table>";
+            document.getElementById("DIV_LIST_ORDERS").innerHTML = LIST;
+        }
+
+
+        function SHOW_ORDER_LIST(list) {
+
+            LIST = "";
+            LIST += "<table width=100%>";
+            LIST += "<tr class=inventory_header><td>ORDERS</td></tr>";
+
+            LIST += "<tr class=inventory_header>";
+            LIST += "<td class=inventory_cell>status</td>";
+            LIST += "<td class=inventory_cell>QR</td>";
+            LIST += "<td class=inventory_cell>time QR scanned</td>";
+            LIST += "<td class=inventory_cell>time picked Time</td>";
+            LIST += "<td class=inventory_cell>name</td>";
+            LIST += "<td class=inventory_cell>mail</td>";
+            LIST += "<td class=inventory_cell>CARS</td>";
+            LIST += "<td class=inventory_cell>Terminal</td>";
+            LIST += "</tr>";
+            list.forEach(order => {
+
+                LIST += "<tr>";
+                LIST += "<td class=inventory_cell>" + order.orderStatus + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderQr + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderTimeQrScanned + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderTimeCarsPicked + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderUserName + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderUserEmail + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderCars + "</td>";                
+                LIST += "<td class=inventory_cell>" + order.terminal_id + "</td>";
+                LIST += "</tr>";
+
+            });
+            LIST += "</table>";
+            document.getElementById("DIV_LIST_ORDERS").innerHTML = LIST;
+        }
+
+
+        function SHOW_ORDER_LIST_INTERRUPTED(list) {
+
+            LIST = "<div class=btnwide>INTERRUPTED----</div>";
+            LIST += "<table width=100%>";
+            LIST += "<tr class=inventory_header><td>ORDERS</td></tr>";
+
+            LIST += "<tr class=inventory_header>";
+            LIST += "<td class=inventory_cell>status</td>";
+            LIST += "<td class=inventory_cell>QR</td>";
+            LIST += "<td class=inventory_cell>time QR scanned</td>";
+            LIST += "<td class=inventory_cell>time picked Time</td>";
+            LIST += "<td class=inventory_cell>name</td>";
+            LIST += "<td class=inventory_cell>mail</td>";
+            LIST += "<td class=inventory_cell>xCARS</td>";
+            LIST += "<td class=inventory_cell>terminal</td>";
+            LIST += "</tr>";
+            list.forEach(order => {
+
+                LIST += "<tr>";
+                LIST += "<td class=inventory_cell>" + order.orderStatus + "</td>";
+                LIST += "<td class=inventory_cell><div class=btn onClick=orderQrInterruptedToInCue('" + order.orderQr + "')>" + order.orderQr + "</div></td>";
+                LIST += "<td class=inventory_cell>" + order.orderTimeQrScanned + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderTimeCarsPicked + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderUserName + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderUserEmail + "</td>";
+                LIST += "<td class=inventory_cell>" + order.orderCars + "</td>";
+                LIST += "<td class=inventory_cell>xxx" + order.terminal_id + "</td>";
+                LIST += "</tr>";
+
+            });
+            LIST += "</table>";
+            document.getElementById("DIV_LIST_ORDERS").innerHTML = LIST;
+        }
+
+        function SIO_ORDERS_GET_INTERRUPTED() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_GETORDERS_INTERRUPTED";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_ORDERS_GET_ALL() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_GETORDERS_ALL";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_ORDERS_GET_INCUE() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_GETORDERS_INCUE";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_ORDERS_GET_PICKED() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_GETORDERS_PICKED";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_ORDERS_GET_POPULAR() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_GETORDERS_POPULAR";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        // Wait for DOM to load before attaching event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM loaded - attaching event listeners');
+
+            document.querySelectorAll('.btnWide').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // Determine action based on button text
+                    const action = this.textContent.trim();
+                    switch (action) {
+                        case 'INTERRUPTED':
+                            SIO_ORDERS_GET_INTERRUPTED();
+                            console.log("OPERATOR_GETORDERS_INTERRUPTED");
+                            break;
+
+                        case 'ALL':
+                            SIO_ORDERS_GET_ALL();
+                            console.log("SIO_ORDERS_GET_ALL");
+                            break;
+                        case 'INCUE':
+                            SIO_ORDERS_GET_INCUE();
+                            console.log("SIO_ORDERS_GET_INCUE");
+                            break;
+                        case 'PICKED':
+                            SIO_ORDERS_GET_PICKED();
+                            console.log("SIO_ORDERS_GET_PICKED");
+                            break;
+                        case 'POPULAR':
+                            SIO_ORDERS_GET_POPULAR();
+                            console.log("SIO_ORDERS_GET_POPULAR");
+                            break;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+<div class="hwlogo_operator"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+
+<body class="inventory_background">
+
+    <div class="blockContent">
+        <div class="operator_header">HOTWHEELS ORDERS </div>
+
+        <div class="btnWide">INTERRUPTED</div>
+        <div class="btnWide">ALL</div>
+        <div class="btnWide">INCUE</div>
+        <div class="btnWide">PICKED</div>
+        <div class="btnWide">POPULAR</div>
+    </div>
+
+    <div class="blockContent">
+        <div class=btn onClick="printDiv('DIV_LIST_ORDERS');">&#128438; print</div>
+        <div id="DIV_LIST_ORDERS" class="blockScrollable">
+            <table width=100%>
+                <tr class=cueline_header>
+                    <td colspan=4 class=cueline_cell>ORDERS</td>
+                </tr>
+                <tr class=cueline_header>
+                    <td class=inventory_cell>status</td>
+                    <td class=inventory_cell>QR</td>
+                    <td class=inventory_cell>QR scanned <br>(date)</td>
+                    <td class=inventory_cell>picked <br>(date)</td>
+                    <td class=inventory_cell>name</td>
+                    <td class=inventory_cell>mail</td>
+                    <td class=inventory_cell>CARS</td>
+                    <td class=inventory_cell>Terminal</td>
+                </tr>
+
+                <% ORDERS.forEach(ORDER=> { %>
+                    <tr>
+                        <td class="inventory_cell"><%= ORDER.orderStatus %></td>
+                        <td class="inventory_cell"><%= ORDER.orderQr %></td>
+                        <td class="inventory_cell"><%= ORDER.orderTimeQrScanned %></td>
+                        <td class="inventory_cell"><%= ORDER.orderTimeCarsPicked %></td>
+                        <td class="inventory_cell"><%= ORDER.orderUserName %></td>
+                        <td class="inventory_cell"><%= ORDER.orderUserEmail %></td>
+                        <td class="inventory_cell"><%= ORDER.orderCars %></td>
+                        <td class=inventory_cell><%= ORDER.terminal_id %></td>;
+                    </tr>
+                    <% }); %>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

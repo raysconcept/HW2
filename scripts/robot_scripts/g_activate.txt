@@ -1,0 +1,6 @@
+ Program
+   Variables Setup
+   Robot Program
+     Gripper Activate
+     Gripper Open (1)
+     get_tcp_force()

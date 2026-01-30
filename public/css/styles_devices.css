@@ -1,0 +1,104 @@
+/*
+- wrapper (for each device a new div wrapper)
+--- header (name / id of device + reference to code that runs on it)
+--- container
+----- command (buttons to send commands)
+----- replies (status & other replies, refresh with every reply)
+----- log (outgoing + incomming)
+
+GENERAL STRUCTURE, only show if the device is present
+<div id=device_wrapper_deviceId1 class=device_wrapper>
+    // the wrapper must have an id, to be able to toggle it completely
+
+    <div id=none class=device_header>load name and info, like: ESP1, running codeRef_ESP1v1</div>
+    <div id=none class=devive_container>
+        <div id=none class=device_command_deviceId1 onClick=getStatus(deviceId1)>getStatus</div>
+        <div id=none class=device_command_deviceId1 onClick=someCommand1(deviceId1)>someCommand1</div>
+        <div id=none class=device_command_deviceId1 onClick=someCommand2(deviceId1)>someCommand2</div>
+        <div id=device_replies_deviceId1 class=device_replies>replies here....</div>
+        <div id=device_log_deviceId1 class=device_replies>log here....</div>        
+    </div>
+</div>
+
+body {
+    overflow: auto !important;
+    height: auto !important;
+    font-size: 7pt;
+}*/
+
+
+.columns {
+            display: grid;
+            grid-template-columns: 70% 30%;
+            gap: 10px;
+            padding: 10px;
+        }
+.column-left{
+    padding: 2px; margin: 8px 0;
+}
+.column-right{
+    padding: 2px; margin: 8px 0;
+}
+@media (max-width: 600px) {
+    .columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.device_communication {
+    border-radius: 5px;
+    padding: 2px;
+    margin: 5px;
+    background-color: rgb(19, 19, 19);
+}
+
+.device_wrapper {
+    border-radius: 5px;
+    padding: 2px;
+    margin: 5px;
+    background-color: rgb(19, 19, 19);
+}
+
+.device_gridy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.device_header {
+    /* name of the device  */
+    border-radius: 5px;
+    margin: 5px;
+    padding: 4px;
+    background-color: rgb(83, 76, 91);
+    color: white;
+}
+
+.device_container {
+    border-radius: 5px;
+    margin: 5px;
+    padding: 2px;
+    background-color: rgb(5, 145, 244);
+}
+
+.device_command {
+    border-radius: 5px;
+    padding: 2px;
+    margin: 5px;
+    background-color: rgb(140, 140, 252);
+}
+
+.device_replies {
+    border-radius: 1px;
+    padding: 2px;
+    margin: 5px;
+    background-color: rgb(255, 227, 190);
+    color: black;
+}
+
+.device_log {
+    border-radius: 1px;
+    padding: 2px;
+    margin: 5px;
+    background-color: rgb(255, 146, 3);
+}

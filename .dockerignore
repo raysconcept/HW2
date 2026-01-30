@@ -1,0 +1,10 @@
+node_modules
+logs
+public/qr
+public/qrOperator
+public/video
+mysql_data
+bu_databse/*.sql~
+.git
+.gitignore
+*.log

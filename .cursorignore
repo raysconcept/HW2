@@ -1,0 +1,12 @@
+bu_databse/*
+bu_code/*
+extra_software/*
+logs/*
+node_modules/*
+.git/*
+raceVideo/*
+raceOverlay/*
+hw_videoServerCom/*
+hw_cars/*
+public/webrotate/*
+sw_modules/*

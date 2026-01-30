@@ -1,0 +1,41 @@
+<head>
+    <title>VIDEOPLAYER</title>
+</head>
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<iframe src="/hw_sounds/carSounds/HW10_TEST_SOUND_PLAY.html" style="display:none">SOUNDS</iframe>
+
+
+<div id="DIV_VIDEOPLAYER" class="videoplayer_container">
+
+    <div class="videoplayer_header">SPEEDCHALLENGE THE LATEST VIDEO</div>
+    <div id="DIV_LIST_LEADERBOARD" class="videoplayer_leaderboard">LEADERBOARD</div>
+    <video id="race_video" width="100%" height="100%" autoplay loop >
+        <source src="video/video_race.mp4" type="video/mp4">
+    </video>
+   </div>
+
+   
+   <script>
+    // let videoIdle;
+     document.addEventListener("DOMContentLoaded", function () {
+         const videoIdle = document.getElementById('race_video');
+         videoIdle.focus();
+         //setInterval(videoPlay, 5000);
+
+         function videoPlay() {
+             var videoIdle = document.getElementById('race_video');
+             videoIdle.play();             
+         }
+         
+         setTimeout(function () {
+            videoIdle.play().catch(function (error) {
+                 // Autoplay was prevented, handle the error
+                 console.error('Autoplay was prevented: ', error);
+             });
+         }, 2000); // Delay in milliseconds before playing the video
+         
+         
+
+     });
+ </script>

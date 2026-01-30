@@ -1,0 +1,262 @@
+<div class="device_wrapper">
+    <div class="device_header">ESP UNITS / nr of sockets: <%= GLOBALS.ESP_SOCKETS.size %></div>
+    
+    <!-- Single ESP32 Status Panel (Legacy) -->
+
+    <div id="espStatusPanel" class="esp-status-container">
+        <div class="device_header">ESP32 Status Monitor</div>
+        <script>forEach(<%= GLOBALS.ESP_SOCKETS %>){}</script>
+        <div class="device_container">
+            <div>Connection: <span id="status_esp1" class="esp-value esp-unknown">Unknown</span></div>
+            <div>LED Status: <span id="ledState" class="esp-value esp-unknown">Unknown</span></div>
+            <div>RGB LED: <span id="rgbState" class="esp-value esp-unknown">Unknown</span></div>
+            <div>Last Update: <span id="lastUpdateTime" class="esp-value">Never</span></div>
+
+            <button class="device_command" onclick="ESP_GET_STATUS()" class="esp-refresh-btn">ESP GET STATUS</button>
+            <button class="device_command" onclick="ESP_NEW_LEDEFFECT('LED_WHEEL_GREEN')"
+                class="esp-refresh-btn">LED_WHEEL_GREEN'</button>
+            <button class="device_command" onclick="ESP_NEW_LEDEFFECT('LED_WHEEL_BLUE')"
+                class="esp-refresh-btn">LED_WHEEL_BLUE'</button>
+
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // ESP32 command functions
+    function ESP_GET_STATUS() {
+        if (typeof S2 !== 'undefined') {
+            S2.emit('MFC_ESP_GET_STATUS');
+        }
+    }
+    function ESP_NEW_LEDEFFECT(fx) {
+        if (typeof S2 !== 'undefined') {
+            S2.emit('MFC_ESP_NEW_LEDEFFECT', fx);
+        }
+    }
+</script>
+<!--
+    <script>
+
+        function ESP_NEW_LEDEFFECT(x) {
+            if (typeof S2 !== 'undefined') {
+                S2.emit('MFC_ESP_NEW_LEDEFFECT', x);
+            }
+        }
+
+        // Legacy function for backward compatibility
+        function getESPStatus() {
+            console.log("Requesting ESP32 status (legacy)");
+            if (typeof S2 !== 'undefined') {
+                S2.emit('ESP_STATUS_REQUEST');
+                addMessageToLog("Requesting ESP32 status...", "info");
+            } else {
+                console.error("Socket connection not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+        function turnOffAll() {
+            console.log("Turning off all LEDs");
+            sendESPCommand('led_off', 'LED_OFF');
+            setTimeout(() => {
+                sendESPCommand('rgb_off', 'RGB_OFF');
+            }, 100);
+        }
+
+        // Function to clear messages
+        function clearMessages() {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = "No messages yet...";
+        }
+
+        // Function to add messages to the Communication Log
+        function addMessageToLog(message, type = "info") {
+            const messageList = document.getElementById('messageList');
+            const timestamp = new Date().toLocaleTimeString();
+            const messageClass = type === "error" ? "color: red;" :
+                type === "sent" ? "color: blue;" :
+                    type === "received" ? "color: green;" : "";
+
+            const messageHTML = `<div style="${messageClass}"><strong>[${timestamp}]</strong> ${message}</div>`;
+
+            if (messageList.innerHTML === "No messages yet...") {
+                messageList.innerHTML = messageHTML;
+            } else {
+                messageList.innerHTML = messageHTML + messageList.innerHTML;
+            }
+
+            // Limit to last 50 messages
+            const messages = messageList.querySelectorAll('div');
+            if (messages.length > 50) {
+                messageList.removeChild(messages[messages.length - 1]);
+            }
+
+            // Console logging based on message type
+            const logMessage = `[${timestamp}] ${message}`;
+            switch (type) {
+                case "error":
+                    console.error(logMessage);
+                    break;
+                case "sent":
+                case "received":
+                    console.log(logMessage);
+                    break;
+                default:
+                    console.info(logMessage);
+            }
+        }
+
+        // Function to update ESP32 status display
+        function updateESPStatus(data) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            if (data.ethernet_connected !== undefined) {
+                const connectionElement = document.getElementById('connectionState');
+                const newStatus = data.ethernet_connected ? 'Connected' : 'Disconnected';
+                const newClass = data.ethernet_connected ? 'esp-connected' : 'esp-disconnected';
+
+                if (connectionElement.textContent !== newStatus) {
+                    connectionElement.textContent = newStatus;
+                    connectionElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(connectionElement.parentElement);
+                }
+            }
+
+            if (data.led_status !== undefined) {
+                const ledElement = document.getElementById('ledState');
+                const newStatus = data.led_status ? 'ON' : 'OFF';
+                const newClass = data.led_status ? 'esp-on' : 'esp-off';
+
+                if (ledElement.textContent !== newStatus) {
+                    ledElement.textContent = newStatus;
+                    ledElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(ledElement.parentElement);
+                }
+            }
+
+            if (data.rgb_led_status !== undefined) {
+                const rgbElement = document.getElementById('rgbState');
+                const newStatus = data.rgb_led_status.toUpperCase();
+                const colorMap = {
+                    'red': 'esp-red',
+                    'green': 'esp-green',
+                    'blue': 'esp-blue',
+                    'white': 'esp-white',
+                    'off': 'esp-off'
+                };
+                const newClass = colorMap[data.rgb_led_status] || 'esp-unknown';
+
+                if (rgbElement.textContent !== newStatus) {
+                    rgbElement.textContent = newStatus;
+                    rgbElement.className = `esp-value ${newClass}`;
+                    animateStatusUpdate(rgbElement.parentElement);
+                }
+            }
+
+            document.getElementById('lastUpdateTime').textContent = timestamp;
+        }
+
+        // Function to animate status updates
+        function animateStatusUpdate(element) {
+            element.classList.add('updated');
+            setTimeout(() => {
+                element.classList.remove('updated');
+            }, 500);
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // ESP Communication (commands sent to the ESP)
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        // Generic function to send ESP32 commands
+        function sendESPCommand(command, source = '') {
+            if (typeof S2 !== 'undefined') {
+                const commandObj = { command: command };
+                // console.log(`Sending ESP32 command (${source}):`, commandObj);
+
+                // Send via new ESP_COMMAND event
+                S2.emit('MFC_ESP_COMMAND', commandObj);
+
+                // Also send via traditional MFO
+                // let terminal = "AVFX";
+                // let action = source || command.toUpperCase();
+                // let message = `ESP32 command: ${command}`;
+                // let MSG = terminal + "___" + action + "___" + message;
+                // S2.emit('MFC', MSG);
+
+                addMessageToLog(`Sent command: ${command}`, "sent");
+            } else {
+                console.error("Socket connection (S2) not available");
+                addMessageToLog("Error: Socket connection not available", "error");
+            }
+        }
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // SIO ESP setup (responses received from the ESP)
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        // Listen for ESP32 responses if S2 is available
+        if (typeof S2 !== 'undefined') {
+            // Listen for ESP32 responses 'ESP_RESPONSE'
+            S2.on('ESP_RESPONSE', function (data) {
+                //S2.on('helloFromEsp', function (data) {
+
+                console.log('ESP32 Response: ', data);
+
+                addMessageToLog(`${data.action}: ${JSON.stringify(data.message)}`, "received");
+
+                // Update status display if this is a status update
+                if (data.action === 'status_update' && data.message) {
+                    updateESPStatus(data.message);
+                }
+
+                // Handle specific message types
+                switch (data.action) {
+                    case 'welcome':
+                        addMessageToLog(`ESP32 Connected: ${data.message.message}`, "received");
+                        break;
+
+                    case 'response':
+                        addMessageToLog(`Command '${data.message.command}' executed: ${data.message.message}`, "received");
+                        break;
+
+                    case 'DISCONNECTED':
+                        addMessageToLog("ESP32 disconnected", "error");
+
+                        // Update connection state
+                        const connectionElement = document.getElementById('connectionState');
+                        connectionElement.textContent = 'Disconnected';
+                        connectionElement.className = 'esp-value esp-disconnected';
+
+                        // Update legacy status display if available
+                        if (document.getElementById("DIV_ESP_STATUS")) {
+                            document.getElementById("DIV_ESP_STATUS").innerHTML =
+                                `[${new Date().toLocaleTimeString()}] ESP32 DISCONNECTED`;
+                        }
+                        break;
+
+                    case "status_update":
+                        // Update legacy status display if available
+                        if (document.getElementById("DIV_ESP_STATUS")) {
+                            const timestamp = new Date().toLocaleTimeString();
+                            document.getElementById("DIV_ESP_STATUS").innerHTML =
+                                `[${timestamp}] ${data.action}: ${JSON.stringify(data.message)}`;
+                        }
+
+                        if (document.getElementById("DIV_ESP_STATUS_DETAIL")) {
+                            const status = data.message;
+                            document.getElementById("DIV_ESP_STATUS_DETAIL").innerHTML = `
+                  <div>Connection: ${status.ethernet_connected ? 'Connected' : 'Disconnected'}</div>
+                  <div>RGB LED: ${status.rgb_led_status}</div>
+                  <div>Timestamp: ${status.timestamp}ms</div>
+               `;
+                        }
+                        break;
+                }
+            });
+    </script>
+-->

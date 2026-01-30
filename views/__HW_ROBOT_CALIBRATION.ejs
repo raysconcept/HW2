@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en" class="hw-calibration-root">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Robot Calibration Console</title>
+    <link rel="stylesheet" href="/css/stylesHW.css">
+    <style>
+        html.hw-calibration-root {
+            overflow-y: auto;
+        }
+
+        body.hw-calibration {
+            font-family: Arial, sans-serif;
+            background: #0c1520;
+            color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .calibration-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .calibration-header h1 {
+            margin: 0 0 12px;
+            font-size: 28px;
+        }
+
+        .calibration-header p {
+            margin: 4px 0;
+            color: #c9d3e0;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .status-card {
+            background: rgba(20, 32, 45, 0.85);
+            border: 1px solid rgba(60, 93, 130, 0.6);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .status-card strong {
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #9fb6ce;
+            margin-bottom: 4px;
+        }
+
+        .flag-ok {
+            color: #54d98c;
+            font-weight: 700;
+        }
+
+        .flag-bad {
+            color: #ff7676;
+            font-weight: 700;
+        }
+
+        .cal-section {
+            margin-top: 0;
+            background: rgba(15, 24, 35, 0.93);
+            border: 1px solid rgba(66, 102, 143, 0.5);
+            border-radius: 10px;
+            padding: 24px;
+        }
+
+        .cal-section h2 {
+            margin: 0 0 16px;
+            font-size: 22px;
+            color: #7fb8ff;
+        }
+
+        .cal-steps {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .cal-panels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 24px;
+            align-items: flex-start;
+        }
+
+        .cal-column {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        .cal-column.cal-controls {
+            flex: 0 0 320px;
+            max-width: 320px;
+            align-self: flex-start;
+        }
+
+        .cal-column.locked .cal-section {
+            filter: grayscale(0.6) brightness(0.7);
+            pointer-events: none;
+        }
+
+        .panel-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            font-size: 14px;
+            color: #f5f7fa;
+            background: rgba(12, 21, 32, 0.75);
+            border-radius: 10px;
+            z-index: 2;
+        }
+
+        .cal-column.locked .panel-overlay {
+            display: flex;
+        }
+
+        .cal-step {
+            background: rgba(13, 22, 34, 0.88);
+            border: 1px solid rgba(60, 93, 130, 0.55);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            transition: opacity 0.15s ease;
+        }
+
+        .cal-step.disabled::after {
+            content: 'Awaiting previous step';
+            position: absolute;
+            inset: 0;
+            background: rgba(12, 21, 32, 0.78);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #d0d8e3;
+            border-radius: 8px;
+        }
+
+        .cal-step.completed {
+            opacity: 0.55;
+        }
+
+        .cal-step.completed button {
+            cursor: not-allowed;
+        }
+
+        .orientation-verify-status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #9fb6ce;
+        }
+
+        .orientation-verify-status .status-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .orientation-verify-status .status-ok {
+            color: #54d98c;
+            font-weight: 600;
+        }
+
+        .orientation-verify-status .status-pending {
+            color: #ffb066;
+        }
+
+        .secondary {
+            margin-top: 8px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 118, 118, 0.7);
+            background: transparent;
+            color: #ff7676;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .secondary:hover {
+            background: rgba(255, 118, 118, 0.1);
+        }
+
+        .secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .controls-card {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            z-index: 5;
+        }
+
+        .cal-column.cal-controls {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            height: fit-content;
+            z-index: 6;
+        }
+
+        .controls-card {
+            position: sticky;
+            top: 24px;
+            z-index: 6;
+        }
+
+        .controls-card.locked {
+            filter: grayscale(0.6) brightness(0.85);
+        }
+
+        .controls-card.locked button {
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .controls-card-placeholder {
+            display: none;
+            width: 100%;
+        }
+
+        .controls-card.floating {
+            box-shadow: 0 8px 24px rgba(12, 21, 32, 0.45);
+            border: 1px solid rgba(103, 160, 255, 0.35);
+        }
+
+        .controls-status {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #9fb6ce;
+        }
+
+        .controls-card.locked .controls-status {
+            color: #6f8298;
+        }
+
+        .cal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .cal-actions button,
+        .cal-footer button {
+            background: linear-gradient(145deg, #1f4d85, #17365c);
+            border: 1px solid #67a0ff;
+            color: #f0f6ff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+
+        .cal-actions button:hover,
+        .cal-footer button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(23, 81, 140, 0.45);
+        }
+
+        .cal-actions button:active,
+        .cal-footer button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .nudge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 56px) 90px;
+            grid-template-rows: repeat(3, 56px);
+            gap: 6px;
+            align-items: start;
+        }
+
+        .nudge-grid button {
+            width: 56px;
+            height: 56px;
+            font-size: 18px;
+        }
+
+        .nudge-grid .nudge-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: flex-start;
+            padding-left: 18px;
+        }
+
+        .nudge-grid .nudge-vertical button {
+            width: 82px;
+            height: 56px;
+        }
+
+        .cal-output {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .cal-output-card {
+            background: rgba(10, 18, 28, 0.92);
+            border: 1px solid rgba(57, 98, 142, 0.6);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+        }
+
+        .cal-output-card h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+            color: #9ccaff;
+            text-transform: uppercase;
+        }
+
+        .value-label {
+            display: block;
+            margin: 6px 0;
+            color: #d3e4ff;
+        }
+
+        .value-code {
+            font-family: "Courier New", Courier, monospace;
+            background: rgba(30, 52, 79, 0.7);
+            padding: 6px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .badge.pending {
+            background: rgba(255, 152, 56, 0.2);
+            border: 1px solid rgba(255, 152, 56, 0.6);
+            color: #ffbb77;
+        }
+
+        .badge.verified {
+            background: rgba(84, 217, 140, 0.25);
+            border: 1px solid rgba(84, 217, 140, 0.7);
+            color: #7dfcbb;
+        }
+
+        .cal-log {
+            margin-top: 32px;
+            background: rgba(12, 21, 32, 0.95);
+            border: 1px solid rgba(72, 105, 143, 0.4);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 220px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .cal-log-entry {
+            margin: 0;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(84, 122, 168, 0.25);
+        }
+
+        .cal-log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .cal-log-entry.error {
+            color: #ff8a8a;
+        }
+
+        .cal-footer {
+            margin-top: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #c6d9f1;
+        }
+
+        code.inline-code {
+            background: rgba(42, 64, 93, 0.75);
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: #f5f7fa;
+        }
+    </style>
+</head>
+
+<body class="hw-calibration">
+    <div class="calibration-container">
+        <header class="calibration-header">
+            <h1>Robot Coordinate Calibration</h1>
+            <p>Calibration data file: <code class="inline-code" id="calibration-file"><%= calibrationFile %></code></p>
+            <div class="status-grid">
+                <div class="status-card">
+                    <strong>Robot Connection</strong>
+                    <div>Connected:
+                        <span id="robot-connected" class="<%= robotStatus.isConnected ? 'flag-ok' : 'flag-bad' %>">
+                            <%= robotStatus.isConnected ? 'Yes' : 'No' %>
+                        </span>
+                    </div>
+                    <div>Available:
+                        <span id="robot-available" class="<%= robotStatus.isAvailable ? 'flag-ok' : 'flag-bad' %>">
+                            <%= robotStatus.isAvailable ? 'Yes' : 'No' %>
+                        </span>
+                    </div>
+                    <div>Protective stop:
+                        <span id="robot-protective" class="<%= robotStatus.isProtectiveStop ? 'flag-bad' : 'flag-ok' %>">
+                            <%= robotStatus.isProtectiveStop ? 'Active' : 'Clear' %>
+                        </span>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <strong>TCP Position (mm)</strong>
+                    <div id="robot-tcp">X:
+                        <%= robotStatus.tcpM && robotStatus.tcpM.length ? robotStatus.tcpM[0] : '—' %>,
+                        Y:
+                        <%= robotStatus.tcpM && robotStatus.tcpM.length ? robotStatus.tcpM[1] : '—' %>,
+                        Z:
+                        <%= robotStatus.tcpM && robotStatus.tcpM.length ? robotStatus.tcpM[2] : '—' %>
+                    </div>
+                    <div id="robot-rpy">RX:
+                        <%= robotStatus.tcpR && robotStatus.tcpR.length ? robotStatus.tcpR[0] : '—' %>,
+                        RY:
+                        <%= robotStatus.tcpR && robotStatus.tcpR.length ? robotStatus.tcpR[1] : '—' %>,
+                        RZ:
+                        <%= robotStatus.tcpR && robotStatus.tcpR.length ? robotStatus.tcpR[2] : '—' %>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <strong>Calibration Snapshot</strong>
+                    <div>α (deg):
+                        <span id="summary-alpha"><%= calibration.orientation.alphaDeg !== null ? calibration.orientation.alphaDeg : '—' %></span>
+                    </div>
+                    <div>ΔX (mm):
+                        <span id="summary-offset-x"><%= calibration.translation.offsetXmm !== null ? calibration.translation.offsetXmm : '—' %></span>
+                    </div>
+                    <div>ΔY (mm):
+                        <span id="summary-offset-y"><%= calibration.translation.offsetYmm !== null ? calibration.translation.offsetYmm : '—' %></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="cal-panels">
+            <section class="cal-column cal-controls">
+                <div class="cal-section controls-card" id="jog-controls-card">
+                    <h2>Robot Controls</h2>
+                    <p class="step-note">Use jog controls to fine-tune cassette alignment. Buttons issue relative moves from the current TCP pose.</p>
+                    <div class="nudge-grid">
+                        <span></span>
+                        <button data-command="nudge" data-direction="up" data-repeatable="true">↑</button>
+                        <span></span>
+                        <div class="nudge-vertical" rowspan="3">
+                            <button data-command="nudge" data-direction="in" data-repeatable="true">IN</button>
+                            <button data-command="nudge" data-direction="out" data-repeatable="true">OUT</button>
+                        </div>
+                        <button data-command="nudge" data-direction="left" data-repeatable="true">←</button>
+                        <button data-command="nudge" data-direction="down" data-repeatable="true">↓</button>
+                        <button data-command="nudge" data-direction="right" data-repeatable="true">→</button>
+                    </div>
+                    <p class="step-note">Arrow nudges move 1&nbsp;mm per tap. IN advances 10&nbsp;mm into the cassette; OUT retracts 50&nbsp;mm.</p>
+                    <p class="controls-status" id="jog-controls-status">Jog controls locked until a jogging step is active.</p>
+                </div>
+            </section>
+
+            <section class="cal-column cal-orientation">
+                <div class="cal-section">
+                    <h2>Orientation Calibration</h2>
+                    <div class="step-list">
+                        <div class="cal-step" id="orientation-step1">
+                            <div class="step-header">
+                                <span>Step 1 · Move to cassette&nbsp;1</span>
+                                <span class="badge pending step" id="orientation-step1-status">Pending</span>
+                            </div>
+                            <button id="btn-orientation-goto" data-command="goto" data-cassette="1" data-context="orientation">Go to Cassette 1</button>
+                            <p class="step-note">Once in position, use the jog controls to aim the laser at cassette&nbsp;1 corner.</p>
+                        </div>
+                        <div class="cal-step" id="orientation-step2">
+                            <div class="step-header">
+                                <span>Step 2 · Jog laser to cassette corner</span>
+                                <span class="badge pending step" id="orientation-step2-status">Pending</span>
+                            </div>
+                            <button id="btn-orientation-align" data-command="orientation-align-confirm">Confirm alignment</button>
+                            <p class="step-note">Use the jog controls to place the laser exactly in the cassette 1 corner, then confirm to continue.</p>
+                        </div>
+                        <div class="cal-step" id="orientation-step3">
+                            <div class="step-header">
+                                <span>Step 3 · Travel −<%= referenceTravelMm %> mm on Y (safe)</span>
+                                <span class="badge pending step" id="orientation-step3-status">Pending</span>
+                            </div>
+                            <button id="btn-orientation-travel" data-command="orientation-travel-safe" data-distance="<%= referenceTravelMm %>" data-context="orientation_travel">Perform safe travel</button>
+                            <p class="step-note">The robot first moves to the Safe Left position and then travels 1265&nbsp;mm along the cassette depth to reach the reference baseline.</p>
+                        </div>
+                        <div class="cal-step" id="orientation-step4">
+                            <div class="step-header">
+                                <span>Step 4 · Record cassette&nbsp;153 initial position (x₁, y₁)</span>
+                                <span class="badge pending step" id="orientation-step4-status">Pending</span>
+                            </div>
+                            <button id="btn-orientation-baseline" data-command="orientation-baseline-confirm">Confirm cassette 153 baseline</button>
+                            <p class="step-note">Once the safe travel finishes, confirm to record the cassette&nbsp;153 entry pose.</p>
+                        </div>
+                        <div class="cal-step" id="orientation-step5">
+                            <div class="step-header">
+                                <span>Step 5 · Capture cassette&nbsp;153 corner (x₂, y₂)</span>
+                                <span class="badge pending step" id="orientation-step5-status">Pending</span>
+                            </div>
+                            <button id="btn-orientation-capture-corner" data-capture="orientation_cassette153_corner">Capture cassette 153 corner</button>
+                            <p class="step-note">Jog to cassette&nbsp;153 upper-left corner and capture the point.</p>
+                        </div>
+                        <div class="cal-step" id="orientation-step6">
+                            <div class="step-header">
+                                <span>Step 6 · Confirm orientation</span>
+                                <span class="badge pending step" id="orientation-step6-status">Pending</span>
+                            </div>
+                            <button id="orientation-verify-btn" data-command="orientation-verify">Run verification routine</button>
+                            <p class="step-note" id="orientation-verify-note">The robot will revisit cassette 1 and 153 for operator confirmation.</p>
+                            <div class="orientation-verify-status" id="orientation-verify-status">
+                                <div class="status-row">
+                                    <span>Cassette 1 corner</span>
+                                    <span id="orientation-verify-status-c1" class="status-pending">Pending</span>
+                                </div>
+                                <div class="status-row">
+                                    <span>Cassette 153 corner</span>
+                                    <span id="orientation-verify-status-c153" class="status-pending">Pending</span>
+                                </div>
+                            </div>
+                            <button id="orientation-verify-reject" class="secondary" data-command="orientation-verify-reject" hidden>Report mismatch (reset)</button>
+                        </div>
+                    </div>
+                    <div class="cal-output">
+                        <div class="cal-output-card">
+                            <h3>Captured Points</h3>
+                            <span class="value-label">Cassette 1 reference</span>
+                            <code class="value-code" id="orientation-point-cassette1">—</code>
+                            <span class="value-label">Cassette 153 initial position (x₁, y₁)</span>
+                            <code class="value-code" id="orientation-point-ref">—</code>
+                            <span class="value-label">Cassette 153 corner</span>
+                            <code class="value-code" id="orientation-point-target">—</code>
+                        </div>
+                        <div class="cal-output-card">
+                            <h3>Computed Orientation</h3>
+                            <span class="value-label">Vector length a (mm)</span>
+                            <code class="value-code" id="orientation-vector">—</code>
+                            <span class="value-label">Alpha (deg)</span>
+                            <code class="value-code" id="orientation-alpha">—</code>
+                            <div class="value-label">Status:
+                                <span class="badge pending" id="orientation-status">Pending</span>
+                            </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cal-column cal-translation" id="translation-column">
+                <div class="panel-overlay" id="translation-overlay">Complete orientation calibration to unlock translation steps.</div>
+                <div class="cal-section">
+                    <h2>Translation Calibration</h2>
+                    <div class="step-list">
+                        <div class="cal-step" id="translation-step1">
+                            <div class="step-header">
+                                <span>Step 7 · Return to cassette&nbsp;1</span>
+                                <span class="badge pending step" id="translation-step1-status">Pending</span>
+                            </div>
+                            <button id="btn-translation-goto" data-command="goto" data-cassette="1" data-context="translation">Return to Cassette 1</button>
+                            <p class="step-note">Move back to cassette&nbsp;1 to begin translation calibration.</p>
+                        </div>
+                        <div class="cal-step" id="translation-step2">
+                            <div class="step-header">
+                                <span>Step 8 · Capture reference (x<sub>ref</sub>, y<sub>ref</sub>)</span>
+                                <span class="badge pending step" id="translation-step2-status">Pending</span>
+                            </div>
+                            <button id="btn-translation-capture-ref" data-capture="translation_cassette1_reference">Capture cassette 1 reference</button>
+                            <p class="step-note">Record coordinates when the TCP is at the cassette&nbsp;1 entry point.</p>
+                        </div>
+                        <div class="cal-step" id="translation-step3">
+                            <div class="step-header">
+                                <span>Step 9 · Capture fitted position (x<sub>fit</sub>, y<sub>fit</sub>)</span>
+                                <span class="badge pending step" id="translation-step3-status">Pending</span>
+                            </div>
+                            <button id="btn-translation-capture-fit" data-capture="translation_cassette1_aligned">Capture fitted position</button>
+                            <p class="step-note">Jog until the end-effector seats into the cassette hollows, then capture the point.</p>
+                        </div>
+                        <div class="cal-step" id="translation-step4">
+                            <div class="step-header">
+                                <span>Step 10 · Confirm translation offsets</span>
+                                <span class="badge pending step" id="translation-step4-status">Pending</span>
+                            </div>
+                            <button data-verify="translation" id="translation-verify-btn">Mark translation verified</button>
+                            <p class="step-note">Verify once Δx and Δy look correct. Re-capture if adjustments were made.</p>
+                        </div>
+                    </div>
+                    <div class="cal-output">
+                        <div class="cal-output-card">
+                            <h3>Captured Points</h3>
+                            <span class="value-label">Cassette 1 reference</span>
+                            <code class="value-code" id="translation-point-ref">—</code>
+                            <span class="value-label">Cassette 1 aligned</span>
+                            <code class="value-code" id="translation-point-fitted">—</code>
+                        </div>
+                        <div class="cal-output-card">
+                            <h3>Computed Translation</h3>
+                            <span class="value-label">ΔX (mm)</span>
+                            <code class="value-code" id="translation-offset-x">—</code>
+                            <span class="value-label">ΔY (mm)</span>
+                            <code class="value-code" id="translation-offset-y">—</code>
+                            <div class="value-label">Status:
+                                <span class="badge pending" id="translation-status">Pending</span>
+                            </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="cal-log" id="calibration-log">
+            <p class="cal-log-entry">Calibration console ready.</p>
+        </div>
+
+        <div class="cal-footer">
+            <button id="calibration-reset">Reset calibration data</button>
+            <div>Last updated:
+                <span id="calibration-last-updated"><%= calibration.lastUpdatedAt ? new Date(calibration.lastUpdatedAt).toLocaleString() : '—' %></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const initialCalibration = <%- JSON.stringify(calibration) %>;
+            const initialRobotStatus = <%- JSON.stringify(robotStatus) %>;
+            const referenceTravelMm = <%- referenceTravelMm %>;
+            let hasExistingCalibrationFlag = <%= hasExistingCalibration ? 'true' : 'false' %> === 'true';
+
+            let calibrationState = initialCalibration;
+            let robotStatusState = initialRobotStatus;
+
+            const el = (id) => document.getElementById(id);
+
+            const robotConnectedEl = el('robot-connected');
+            const robotAvailableEl = el('robot-available');
+            const robotProtectiveEl = el('robot-protective');
+            const robotTcpEl = el('robot-tcp');
+            const robotRPyEl = el('robot-rpy');
+
+            const orientationCassette1El = el('orientation-point-cassette1');
+            const orientationPointRefEl = el('orientation-point-ref');
+            const orientationPointTargetEl = el('orientation-point-target');
+            const orientationVectorEl = el('orientation-vector');
+            const orientationAlphaEl = el('orientation-alpha');
+            const orientationStatusEl = el('orientation-status');
+            const orientationVerifyBtn = el('orientation-verify-btn');
+            const orientationVerifyNoteEl = el('orientation-verify-note');
+            const orientationVerifyStatusC1 = el('orientation-verify-status-c1');
+            const orientationVerifyStatusC153 = el('orientation-verify-status-c153');
+            const orientationVerifyRejectBtn = el('orientation-verify-reject');
+
+            const translationPointRefEl = el('translation-point-ref');
+            const translationPointFitEl = el('translation-point-fitted');
+            const translationOffsetXEl = el('translation-offset-x');
+            const translationOffsetYEl = el('translation-offset-y');
+            const translationStatusEl = el('translation-status');
+            const translationVerifyBtn = el('translation-verify-btn');
+
+            const translationColumnEl = el('translation-column');
+            const translationOverlayEl = el('translation-overlay');
+
+            const orientationButtons = {
+                1: el('btn-orientation-goto'),
+                2: el('btn-orientation-align'),
+                3: el('btn-orientation-travel'),
+                4: el('btn-orientation-baseline'),
+                5: el('btn-orientation-capture-corner'),
+                6: orientationVerifyBtn
+            };
+
+            const orientationContainers = {
+                1: el('orientation-step1'),
+                2: el('orientation-step2'),
+                3: el('orientation-step3'),
+                4: el('orientation-step4'),
+                5: el('orientation-step5'),
+                6: el('orientation-step6')
+            };
+
+            const orientationStatusBadges = {
+                1: el('orientation-step1-status'),
+                2: el('orientation-step2-status'),
+                3: el('orientation-step3-status'),
+                4: el('orientation-step4-status'),
+                5: el('orientation-step5-status'),
+                6: el('orientation-step6-status')
+            };
+
+            const translationButtons = {
+                1: el('btn-translation-goto'),
+                2: el('btn-translation-capture-ref'),
+                3: el('btn-translation-capture-fit'),
+                4: translationVerifyBtn
+            };
+
+            const translationContainers = {
+                1: el('translation-step1'),
+                2: el('translation-step2'),
+                3: el('translation-step3'),
+                4: el('translation-step4')
+            };
+
+            const translationStatusBadges = {
+                1: el('translation-step1-status'),
+                2: el('translation-step2-status'),
+                3: el('translation-step3-status'),
+                4: el('translation-step4-status')
+            };
+
+            const summaryAlphaEl = el('summary-alpha');
+            const summaryOffsetXEl = el('summary-offset-x');
+            const summaryOffsetYEl = el('summary-offset-y');
+            const lastUpdatedEl = el('calibration-last-updated');
+            const logPanel = el('calibration-log');
+            const jogControlsCard = el('jog-controls-card');
+            const jogStatusEl = el('jog-controls-status');
+            const jogButtons = Array.from(document.querySelectorAll('.nudge-grid button[data-command="nudge"]'));
+            const controlsColumn = jogControlsCard ? jogControlsCard.closest('.cal-column.cal-controls') : null;
+            let controlsPlaceholder = null;
+            let wasOrientationBaselineCaptured = Boolean(initialCalibration?.workflow?.orientation?.baselineCaptured);
+
+            function formatTimestamp(ts) {
+                if (!ts) return '—';
+                const d = new Date(ts);
+                if (Number.isNaN(d.getTime())) return ts;
+                return d.toLocaleString();
+            }
+
+            function renderPoint(point) {
+                if (!point || typeof point !== 'object') return '—';
+                const parts = [];
+                parts.push(`X=${point.x ?? '—'}`);
+                parts.push(`Y=${point.y ?? '—'}`);
+                if (point.z !== undefined && point.z !== null) {
+                    parts.push(`Z=${point.z}`);
+                }
+                const coords = parts.join(', ');
+                const stamp = point.capturedAt ? ` @ ${formatTimestamp(point.capturedAt)}` : '';
+                return `${coords}${stamp}`;
+            }
+
+            function setBadge(el, verified) {
+                el.classList.remove('verified', 'pending');
+                el.classList.add(verified ? 'verified' : 'pending');
+                el.textContent = verified ? 'Verified' : 'Pending';
+            }
+
+            function deriveProgress(state) {
+                const wf = state.workflow || {};
+                const orientationWf = wf.orientation || {};
+                const translationWf = wf.translation || {};
+                return {
+                    orientation: {
+                        gotoComplete: Boolean(orientationWf.gotoComplete),
+                        alignmentReady: Boolean(orientationWf.alignmentReady),
+                        travelReady: Boolean(orientationWf.travelReady),
+                        travelComplete: Boolean(orientationWf.travelComplete),
+                        baselineCaptured: Boolean(orientationWf.baselineCaptured),
+                        cornerCaptured: Boolean(orientationWf.cornerCaptured),
+                        verified: Boolean(orientationWf.verified)
+                    },
+                    translation: {
+                        gotoComplete: Boolean(translationWf.gotoComplete),
+                        referenceCaptured: Boolean(translationWf.referenceCaptured),
+                        alignedCaptured: Boolean(translationWf.alignedCaptured),
+                        verified: Boolean(translationWf.verified)
+                    }
+                };
+            }
+
+            function updateStepBadge(badgeEl, completed, completeLabel = 'Done', pendingLabel = 'Pending') {
+                if (!badgeEl) return;
+                badgeEl.classList.remove('verified', 'pending');
+                badgeEl.classList.add(completed ? 'verified' : 'pending');
+                badgeEl.textContent = completed ? completeLabel : pendingLabel;
+            }
+
+            function setStepState(button, container, enabled, completed) {
+                const shouldEnable = enabled && !completed;
+
+                if (button) {
+                    button.disabled = !shouldEnable;
+                }
+                if (container) {
+                    container.classList.toggle('disabled', !enabled && !completed);
+                    container.classList.toggle('completed', completed);
+                }
+            }
+
+            function setTranslationLock(locked) {
+            if (!translationColumnEl) return;
+            translationColumnEl.classList.toggle('locked', locked);
+            if (translationOverlayEl) {
+                translationOverlayEl.textContent = locked
+                    ? 'Complete orientation calibration to unlock translation steps.'
+                    : '';
+            }
+        }
+
+            function configureOrientationVerificationUI(state, progress) {
+                if (!orientationVerifyBtn) return;
+                const verification = (state.orientation && state.orientation.verification) || {};
+                const stage = verification.stage || null;
+                const cassette1Done = Boolean(verification.cassette1Confirmed);
+                const cassette153Done = Boolean(verification.cassette153Confirmed);
+                const rejectBtn = orientationVerifyRejectBtn;
+
+                if (orientationVerifyStatusC1) {
+                    orientationVerifyStatusC1.textContent = cassette1Done ? 'Captured' : 'Pending';
+                    orientationVerifyStatusC1.classList.toggle('status-ok', cassette1Done);
+                    orientationVerifyStatusC1.classList.toggle('status-pending', !cassette1Done);
+                }
+                if (orientationVerifyStatusC153) {
+                    orientationVerifyStatusC153.textContent = cassette153Done ? 'Captured' : 'Pending';
+                    orientationVerifyStatusC153.classList.toggle('status-ok', cassette153Done);
+                    orientationVerifyStatusC153.classList.toggle('status-pending', !cassette153Done);
+                }
+
+                let mode = 'start';
+                let note = 'The robot will revisit cassette 1 and 153 for operator confirmation.';
+                let disabled = false;
+
+                const stageInProgress = ['cassette153_capture', 'final_confirm'].includes(stage);
+
+                if (progress.orientation.verified) {
+                    mode = 'toggle';
+                    orientationVerifyBtn.textContent = 'Set orientation pending';
+                    note = 'Angle verification complete. Use this to re-run the routine if needed.';
+                } else if (stage === 'cassette1_capture') {
+                    mode = 'cassette1_capture';
+                    orientationVerifyBtn.textContent = 'Confirm cassette 1 alignment';
+                    note = 'Verify the laser is seated in cassette 1 corner, then confirm to capture the reference.';
+                } else if (stage === 'cassette153_capture') {
+                    mode = 'cassette153_capture';
+                    orientationVerifyBtn.textContent = 'Confirm cassette 153 alignment';
+                    note = 'Verify the laser is at cassette 153 upper-left corner, then confirm to record the target.';
+                } else if (stage === 'final_confirm') {
+                    mode = 'final_confirm';
+                    orientationVerifyBtn.textContent = 'Confirm points match';
+                    note = 'If both cassette corners align, confirm to finish. Use "Report mismatch" if they do not.';
+                } else {
+                    orientationVerifyBtn.textContent = 'Run verification routine';
+                    if (!progress.orientation.cornerCaptured) {
+                        disabled = true;
+                        note = 'Capture cassette 153 corner before running the verification routine.';
+                    }
+                }
+
+                orientationVerifyBtn.dataset.mode = mode;
+                orientationVerifyBtn.dataset.command = 'orientation-verify';
+                orientationVerifyBtn.disabled = disabled;
+
+                if (orientationVerifyNoteEl) {
+                    orientationVerifyNoteEl.textContent = note;
+                }
+
+                if (rejectBtn) {
+                    const showReject = !progress.orientation.verified && stageInProgress;
+                    rejectBtn.hidden = !showReject;
+                    rejectBtn.disabled = !showReject;
+                }
+            }
+
+            function updateFloatingControls() {
+                if (!jogControlsCard || !controlsColumn || !controlsPlaceholder) return;
+                const windowTop = 24;
+                const columnRect = controlsColumn.getBoundingClientRect();
+                const shouldFloat = columnRect.top < windowTop;
+
+                if (shouldFloat) {
+                    const width = columnRect.width;
+                    const left = columnRect.left;
+                    const rightEdge = left + width;
+                    const availableWidth = Math.min(width, window.innerWidth - left - 24);
+
+                    controlsPlaceholder.style.display = 'block';
+                    controlsPlaceholder.style.width = `${width}px`;
+                    controlsPlaceholder.style.height = `${jogControlsCard.offsetHeight}px`;
+                    jogControlsCard.classList.add('floating');
+                    jogControlsCard.style.position = 'fixed';
+                    jogControlsCard.style.top = `${windowTop}px`;
+                    jogControlsCard.style.left = `${Math.max(left, 24)}px`;
+                    jogControlsCard.style.width = `${Math.min(width, availableWidth)}px`;
+                    jogControlsCard.style.maxWidth = `${width}px`;
+                    jogControlsCard.style.boxSizing = 'border-box';
+                    jogControlsCard.style.zIndex = '30';
+                } else {
+                    controlsPlaceholder.style.display = 'none';
+                    controlsPlaceholder.style.height = '0px';
+                    controlsPlaceholder.style.width = '0px';
+                    jogControlsCard.classList.remove('floating');
+                    jogControlsCard.style.position = '';
+                    jogControlsCard.style.top = '';
+                    jogControlsCard.style.left = '';
+                    jogControlsCard.style.width = '';
+                    jogControlsCard.style.maxWidth = '';
+                    jogControlsCard.style.boxSizing = '';
+                    jogControlsCard.style.zIndex = '';
+                }
+            }
+
+            function setupFloatingControls() {
+                if (!jogControlsCard || !controlsColumn) return;
+                if (!controlsPlaceholder) {
+                    controlsPlaceholder = document.createElement('div');
+                    controlsPlaceholder.className = 'controls-card-placeholder';
+                    controlsPlaceholder.style.height = '0px';
+                    controlsColumn.insertBefore(controlsPlaceholder, jogControlsCard.nextSibling);
+                }
+
+                const handleResize = () => {
+                    if (controlsPlaceholder && controlsPlaceholder.style.display === 'block') {
+                        const width = controlsColumn.getBoundingClientRect().width;
+                        controlsPlaceholder.style.height = `${jogControlsCard.offsetHeight}px`;
+                        controlsPlaceholder.style.width = `${width}px`;
+                    }
+
+                    updateFloatingControls();
+                };
+
+
+                window.addEventListener('scroll', updateFloatingControls, { passive: true });
+                window.addEventListener('resize', handleResize);
+
+                if (typeof ResizeObserver === 'function') {
+                    const ro = new ResizeObserver(handleResize);
+                    ro.observe(jogControlsCard);
+                }
+
+                updateFloatingControls();
+            }
+
+            function updateJogControls(state, progress) {
+                if (!jogButtons.length) return;
+
+                const orientationJogActive = progress.orientation.gotoComplete && !progress.orientation.alignmentReady;
+                const cornerJogActive = progress.orientation.baselineCaptured && !progress.orientation.cornerCaptured;
+                const translationRefJogActive = false;
+                const translationAlignJogActive = progress.translation.referenceCaptured && !progress.translation.alignedCaptured;
+                const translationVerifyPending = progress.translation.alignedCaptured && !progress.translation.verified;
+
+                const jogEnabled = orientationJogActive ||
+                    cornerJogActive ||
+                    translationRefJogActive ||
+                    translationAlignJogActive ||
+                    translationVerifyPending;
+
+                jogButtons.forEach((btn) => {
+                    btn.disabled = !jogEnabled;
+                });
+
+                if (jogControlsCard) {
+                    jogControlsCard.classList.toggle('locked', !jogEnabled);
+                }
+
+                if (jogStatusEl) {
+                    jogStatusEl.textContent = jogEnabled
+                        ? 'Jog controls active — adjust the robot using the arrows.'
+                        : 'Jog controls locked until a jogging step is active.';
+                }
+            }
+
+            function applyProgressUI(state) {
+                const progress = deriveProgress(state);
+                const orientationAlphaReady = state.orientation && state.orientation.alphaDeg !== null;
+
+                updateStepBadge(orientationStatusBadges[1], progress.orientation.gotoComplete);
+                setStepState(orientationButtons[1], orientationContainers[1], true, progress.orientation.gotoComplete);
+
+                updateStepBadge(orientationStatusBadges[2], progress.orientation.alignmentReady);
+                setStepState(orientationButtons[2], orientationContainers[2], progress.orientation.gotoComplete, progress.orientation.alignmentReady);
+
+                updateStepBadge(orientationStatusBadges[3], progress.orientation.travelReady);
+                setStepState(orientationButtons[3], orientationContainers[3], progress.orientation.alignmentReady, progress.orientation.travelReady);
+
+                updateStepBadge(orientationStatusBadges[4], progress.orientation.baselineCaptured);
+                setStepState(orientationButtons[4], orientationContainers[4], progress.orientation.travelReady, progress.orientation.baselineCaptured);
+
+                updateStepBadge(orientationStatusBadges[5], progress.orientation.cornerCaptured);
+                setStepState(orientationButtons[5], orientationContainers[5], progress.orientation.baselineCaptured, progress.orientation.cornerCaptured);
+
+                const canVerifyOrientation = progress.orientation.cornerCaptured && orientationAlphaReady;
+                const verificationState = (state.orientation && state.orientation.verification) || {};
+                const verificationStage = verificationState.stage || null;
+                const enableVerifyStep = canVerifyOrientation || Boolean(verificationStage) || progress.orientation.verified;
+                updateStepBadge(orientationStatusBadges[6], progress.orientation.verified, 'Verified', 'Pending');
+                setStepState(orientationButtons[6], orientationContainers[6], enableVerifyStep, progress.orientation.verified);
+                configureOrientationVerificationUI(state, progress);
+
+                const translationLocked = !progress.orientation.verified;
+                setTranslationLock(translationLocked);
+
+                const translationEnabled = !translationLocked;
+                updateStepBadge(translationStatusBadges[1], progress.translation.gotoComplete);
+                setStepState(translationButtons[1], translationContainers[1], translationEnabled, progress.translation.gotoComplete);
+
+                updateStepBadge(translationStatusBadges[2], progress.translation.referenceCaptured);
+                setStepState(translationButtons[2], translationContainers[2], translationEnabled && progress.translation.gotoComplete, progress.translation.referenceCaptured);
+
+                updateStepBadge(translationStatusBadges[3], progress.translation.alignedCaptured);
+                setStepState(translationButtons[3], translationContainers[3], translationEnabled && progress.translation.referenceCaptured, progress.translation.alignedCaptured);
+
+                updateStepBadge(translationStatusBadges[4], progress.translation.verified, 'Verified', 'Pending');
+                setStepState(translationButtons[4], translationContainers[4], translationEnabled && progress.translation.alignedCaptured, progress.translation.verified);
+                translationVerifyBtn.textContent = progress.translation.verified
+                    ? 'Translation verified'
+                    : 'Mark translation verified';
+
+                updateJogControls(state, progress);
+
+                return progress;
+            }
+
+            function updateRobotStatusUI(status) {
+                const yes = (flag) => flag ? 'Yes' : 'No';
+                const className = (flag, okClass = 'flag-ok', badClass = 'flag-bad') => flag ? okClass : badClass;
+
+                robotConnectedEl.textContent = yes(status.isConnected);
+                robotConnectedEl.className = className(status.isConnected);
+
+                robotAvailableEl.textContent = yes(status.isAvailable);
+                robotAvailableEl.className = className(status.isAvailable);
+
+                robotProtectiveEl.textContent = status.isProtectiveStop ? 'Active' : 'Clear';
+                robotProtectiveEl.className = status.isProtectiveStop ? 'flag-bad' : 'flag-ok';
+
+                const tcp = Array.isArray(status.tcpM) ? status.tcpM : [];
+                robotTcpEl.textContent = tcp.length >= 3
+                    ? `X=${tcp[0]}, Y=${tcp[1]}, Z=${tcp[2]}`
+                    : '—';
+
+                const rpy = Array.isArray(status.tcpR) ? status.tcpR : [];
+                robotRPyEl.textContent = rpy.length >= 3
+                    ? `RX=${rpy[0]}, RY=${rpy[1]}, RZ=${rpy[2]}`
+                    : '—';
+            }
+
+            function updateCalibrationUI(state) {
+                const progress = applyProgressUI(state);
+                if (orientationCassette1El) {
+                    orientationCassette1El.textContent = renderPoint(state.orientation.cassette1Reference);
+                }
+                orientationPointRefEl.textContent = renderPoint(state.orientation.cassette153Reference);
+                orientationPointTargetEl.textContent = renderPoint(state.orientation.cassette153Corner);
+                orientationVectorEl.textContent = state.orientation.vectorLengthMm !== null ? `${state.orientation.vectorLengthMm} mm` : '—';
+                orientationAlphaEl.textContent = state.orientation.alphaDeg !== null ? `${state.orientation.alphaDeg}°` : '—';
+                setBadge(orientationStatusEl, Boolean(progress.orientation.verified));
+
+                translationPointRefEl.textContent = renderPoint(state.translation.cassette1Reference);
+                translationPointFitEl.textContent = renderPoint(state.translation.cassette1Aligned);
+                translationOffsetXEl.textContent = state.translation.offsetXmm !== null ? `${state.translation.offsetXmm} mm` : '—';
+                translationOffsetYEl.textContent = state.translation.offsetYmm !== null ? `${state.translation.offsetYmm} mm` : '—';
+                setBadge(translationStatusEl, Boolean(progress.translation.verified));
+
+                summaryAlphaEl.textContent = state.orientation.alphaDeg !== null ? state.orientation.alphaDeg : '—';
+                summaryOffsetXEl.textContent = state.translation.offsetXmm !== null ? state.translation.offsetXmm : '—';
+                summaryOffsetYEl.textContent = state.translation.offsetYmm !== null ? state.translation.offsetYmm : '—';
+                lastUpdatedEl.textContent = formatTimestamp(state.lastUpdatedAt);
+
+                if (progress.orientation.baselineCaptured && !wasOrientationBaselineCaptured) {
+                    logMessage('Cassette 153 baseline recorded.');
+                }
+                wasOrientationBaselineCaptured = progress.orientation.baselineCaptured;
+            }
+
+            function logMessage(message, type = 'info') {
+                const entry = document.createElement('p');
+                entry.className = `cal-log-entry ${type === 'error' ? 'error' : ''}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logPanel.prepend(entry);
+                while (logPanel.childNodes.length > 40) {
+                    logPanel.removeChild(logPanel.lastChild);
+                }
+            }
+
+            async function getJSON(url) {
+                const response = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
+                if (!response.ok) {
+                    throw new Error(`${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            }
+
+            async function postJSON(url, payload) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload || {})
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+                if (!response.ok) {
+                    if (isJson) {
+                        const data = await response.json();
+                        throw new Error(data.error || response.statusText);
+                    }
+                    throw new Error(response.statusText);
+                }
+                return isJson ? response.json() : {};
+            }
+
+            async function refreshState(silent = false) {
+                try {
+                    const data = await getJSON('/api/calibration/state');
+                    if (data.success) {
+                        calibrationState = data.calibration;
+                        robotStatusState = data.robotStatus;
+                        updateCalibrationUI(calibrationState);
+                        updateRobotStatusUI(robotStatusState);
+                        if (!silent) {
+                            logMessage('Calibration state refreshed');
+                        }
+                    } else {
+                        throw new Error(data.error || 'Unknown error');
+                    }
+                } catch (err) {
+                    if (!silent) {
+                        logMessage(`Failed to refresh state: ${err.message}`, 'error');
+                    }
+                }
+            }
+
+            async function pollRobotStatus() {
+                try {
+                    const data = await getJSON('/api/calibration/robot-status');
+                    if (data.success && data.robotStatus) {
+                        robotStatusState = data.robotStatus;
+                        updateRobotStatusUI(robotStatusState);
+                    }
+                } catch {
+                    // ignore transient errors
+                }
+            }
+
+            function parseDeltaFromDataset(target) {
+                const delta = {};
+                let hasValue = false;
+                ['x', 'y', 'z'].forEach((axis) => {
+                    const key = `delta${axis.toUpperCase()}`;
+                    const altKey = `delta${axis.charAt(0).toUpperCase()}${axis.slice(1)}`;
+                    const raw = target.dataset[key] ?? target.dataset[altKey];
+                    if (raw !== undefined) {
+                        const numeric = Number(raw);
+                        if (!Number.isNaN(numeric) && numeric !== 0) {
+                            delta[axis] = numeric;
+                            hasValue = true;
+                        }
+                    }
+                });
+                return hasValue ? delta : null;
+            }
+
+            function handleCalibrationCommandButtons() {
+                const repeatTimers = new Map();
+
+                const stopRepeat = (btn) => {
+                    const timer = repeatTimers.get(btn);
+                    if (timer) {
+                        clearInterval(timer);
+                        repeatTimers.delete(btn);
+                    }
+                };
+
+                const executeCommand = async (btn, { repeat = false } = {}) => {
+                    if (btn.disabled) {
+                        return;
+                    }
+                    const action = btn.dataset.command;
+                    const context = btn.dataset.context || '';
+
+                    const safeLog = (msg, type = 'info') => {
+                        if (!repeat) {
+                            logMessage(msg, type);
+                        }
+                    };
+
+                    try {
+                        if (action === 'goto') {
+                            const cassette = Number(btn.dataset.cassette || 1);
+                            await postJSON('/api/calibration/command', {
+                                action: 'gotoCassette',
+                                payload: { casNr: cassette, context }
+                            });
+                            safeLog(`Command sent: go to cassette ${cassette}`);
+                            if (!repeat) {
+                                setTimeout(() => refreshState(true), 1500);
+                            }
+                        } else if (action === 'orientation-align-confirm') {
+                            await postJSON('/api/calibration/command', {
+                                action: 'orientationAlignConfirm'
+                            });
+                            safeLog('Alignment confirmed.');
+                            if (!repeat) {
+                                setTimeout(() => refreshState(true), 500);
+                            }
+                        } else if (action === 'orientation-travel-safe') {
+                            const distance = Number(btn.dataset.distance || referenceTravelMm || 0);
+                            const response = await postJSON('/api/calibration/command', {
+                                action: 'orientationTravelSafe',
+                                payload: { distance }
+                            });
+                            if (!repeat) {
+                                safeLog(`Safe travel command sent (${distance} mm).`);
+                                setTimeout(() => refreshState(true), 1500);
+                            }
+                        } else if (action === 'orientation-baseline-confirm') {
+                            await postJSON('/api/calibration/command', {
+                                action: 'orientationBaselineConfirm'
+                            });
+                            safeLog('Cassette 153 baseline recorded.');
+                            setTimeout(() => refreshState(true), 500);
+                        } else if (action === 'orientation-verify') {
+                            const mode = btn.dataset.mode || 'start';
+                            if (mode === 'toggle') {
+                                await postJSON('/api/calibration/verify', {
+                                    phase: 'orientation',
+                                    verified: false
+                                });
+                                safeLog('Orientation verification reset.');
+                                setTimeout(() => refreshState(true), 500);
+                            } else if (mode === 'start') {
+                                await postJSON('/api/calibration/command', {
+                                    action: 'orientationVerifyStart'
+                                });
+                                safeLog('Moving to cassette 1 for verification.');
+                                setTimeout(() => refreshState(true), 1500);
+                            } else if (mode === 'cassette1_capture') {
+                                await postJSON('/api/calibration/command', {
+                                    action: 'orientationVerifyConfirm',
+                                    payload: { stage: 'cassette1_capture' }
+                                });
+                                safeLog('Cassette 1 reference captured. Moving to cassette 153.');
+                                setTimeout(() => refreshState(true), 1500);
+                            } else if (mode === 'cassette153_capture') {
+                                await postJSON('/api/calibration/command', {
+                                    action: 'orientationVerifyConfirm',
+                                    payload: { stage: 'cassette153_capture' }
+                                });
+                                safeLog('Cassette 153 corner captured. Ready for final check.');
+                                setTimeout(() => refreshState(true), 1000);
+                            } else if (mode === 'final_confirm') {
+                                await postJSON('/api/calibration/command', {
+                                    action: 'orientationVerifyConfirm',
+                                    payload: { stage: 'final_confirm' }
+                                });
+                                safeLog('Orientation verification complete.');
+                                setTimeout(() => refreshState(true), 800);
+                            } else {
+                                safeLog('Unsupported verification mode: ' + mode, 'error');
+                            }
+                        } else if (action === 'orientation-verify-reject') {
+                            // Reset verification data and clear the persisted angle when operator reports a mismatch
+                            await postJSON('/api/calibration/command', {
+                                action: 'orientationVerifyReject'
+                            });
+                            safeLog('Orientation verification rejected. Calibration reset to pending.');
+                            setTimeout(() => refreshState(true), 800);
+                        } else if (action === 'move-linear') {
+                            const delta = parseDeltaFromDataset(btn) || {};
+                            if (Object.keys(delta).length === 0) {
+                                if (!repeat) {
+                                    logMessage('No movement delta specified', 'error');
+                                }
+                                return;
+                            }
+                            await postJSON('/api/calibration/command', {
+                                action: 'moveLinear',
+                                payload: { deltaMm: delta, speed: 'slow', context }
+                            });
+                            if (!repeat) {
+                                const parts = Object.entries(delta).map(([k, v]) => `${k.toUpperCase()}=${v} mm`);
+                                logMessage(`Requested linear move (${parts.join(', ')})`);
+                                setTimeout(() => refreshState(true), 1800);
+                            }
+                        } else if (action === 'nudge') {
+                            const direction = (btn.dataset.direction || '').toLowerCase();
+                            await postJSON('/api/calibration/command', {
+                                action: 'nudge',
+                                payload: { direction }
+                            });
+                            if (!repeat) {
+                                logMessage(`Nudge command ${direction.toUpperCase()} sent`);
+                                setTimeout(() => refreshState(true), 1200);
+                            }
+                        }
+                    } catch (err) {
+                        safeLog(`Failed to execute ${action}: ${err.message}`, 'error');
+                        stopRepeat(btn);
+                    }
+                };
+
+                document.querySelectorAll('[data-command]').forEach((btn) => {
+                    const repeatable = btn.dataset.repeatable === 'true';
+
+                    if (repeatable) {
+                        const startRepeat = (event) => {
+                            if (event) {
+                                event.preventDefault();
+                            }
+                            if (btn.disabled) return;
+                            if (repeatTimers.has(btn)) return;
+                            executeCommand(btn).catch(() => {});
+                            const timer = setInterval(() => {
+                                executeCommand(btn, { repeat: true }).catch(() => {});
+                            }, 300);
+                            repeatTimers.set(btn, timer);
+                        };
+
+                        const endRepeat = () => stopRepeat(btn);
+
+                        btn.addEventListener('pointerdown', startRepeat);
+                        btn.addEventListener('pointerup', endRepeat);
+                        btn.addEventListener('pointerleave', endRepeat);
+                        btn.addEventListener('pointercancel', endRepeat);
+                        btn.addEventListener('pointerout', endRepeat);
+                    } else {
+                        btn.addEventListener('click', () => executeCommand(btn));
+                    }
+                });
+            }
+
+            function handleCaptureButtons() {
+                document.querySelectorAll('[data-capture]').forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        const pointId = btn.dataset.capture;
+                        try {
+                            const response = await postJSON('/api/calibration/capture', { pointId });
+                            calibrationState = response.calibration;
+                            robotStatusState = response.robotStatus || robotStatusState;
+                            updateCalibrationUI(calibrationState);
+                            updateRobotStatusUI(robotStatusState);
+                            logMessage(`Captured calibration point: ${pointId}`);
+                        } catch (err) {
+                            logMessage(`Failed to capture ${pointId}: ${err.message}`, 'error');
+                        }
+                    });
+                });
+            }
+
+            function handleVerifyButtons() {
+                document.querySelectorAll('[data-verify]').forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        const phase = btn.dataset.verify;
+                        const current = calibrationState[phase]?.verified || false;
+                        const nextValue = !current;
+                        try {
+                            const response = await postJSON('/api/calibration/verify', {
+                                phase,
+                                verified: nextValue
+                            });
+                            calibrationState = response.calibration;
+                            updateCalibrationUI(calibrationState);
+                            logMessage(`${phase} verification set to ${nextValue ? 'verified' : 'pending'}`);
+                        } catch (err) {
+                            logMessage(`Failed to update verification: ${err.message}`, 'error');
+                        }
+                    });
+                });
+            }
+
+            function handleReset() {
+                const resetBtn = el('calibration-reset');
+                resetBtn.addEventListener('click', async () => {
+                    const confirmReset = window.confirm('Reset calibration data to defaults?');
+                    if (!confirmReset) return;
+                    try {
+                        const response = await postJSON('/api/calibration/reset');
+                        calibrationState = response.calibration;
+                        updateCalibrationUI(calibrationState);
+                        logMessage('Calibration data reset to defaults');
+                    } catch (err) {
+                        logMessage(`Failed to reset calibration: ${err.message}`, 'error');
+                    }
+                });
+            }
+
+            async function maybePromptReset() {
+                if (!hasExistingCalibrationFlag) return;
+                hasExistingCalibrationFlag = false;
+                const confirmReset = window.confirm('Existing calibration data detected. Do you want to reset before starting a new calibration?');
+                if (!confirmReset) {
+                    logMessage('Continuing with existing calibration data.');
+                    return;
+                }
+                try {
+                    const response = await postJSON('/api/calibration/reset');
+                    calibrationState = response.calibration;
+                    updateCalibrationUI(calibrationState);
+                    logMessage('Calibration data reset. You can start a new calibration sequence.');
+                } catch (err) {
+                    logMessage(`Failed to reset calibration: ${err.message}`, 'error');
+                }
+            }
+
+            function init() {
+                updateCalibrationUI(calibrationState);
+                updateRobotStatusUI(robotStatusState);
+                handleCalibrationCommandButtons();
+                handleCaptureButtons();
+                handleVerifyButtons();
+                handleReset();
+                setupFloatingControls();
+                maybePromptReset();
+                setInterval(pollRobotStatus, 2000);
+            }
+
+            init();
+        })();
+    </script>
+</body>
+
+</html>

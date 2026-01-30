@@ -1,0 +1,3 @@
+[submodule "devices_esp/whac-a-mole"]
+	path = devices_esp/whac-a-mole
+	url = https://github.com/Ivan2488/whac-a-mole.git

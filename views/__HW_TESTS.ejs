@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>HW TESTS</title>
+  <link rel="stylesheet" href="css/stylesHW.css">
+</head>
+<body class="tests-page">
+  <main class="tests-dashboard">
+    <header class="tests-dashboard__header">
+      <div>
+        <h1>Test Runner</h1>
+        <p class="subtitle">View aggregated results and raw logs from the latest test execution.</p>
+      </div>
+      <div class="test-action">
+        <button id="runBtn" class="btnWide" onclick="runTests()">Run tests</button>
+        <span id="status" class="status-badge status-idle">Idle</span>
+      </div>
+    </header>
+
+    <section class="summary-grid" aria-label="Test summary">
+      <article class="summary-card">
+        <div class="summary-card__label">Test Suites</div>
+        <div class="summary-card__value" id="summarySuites">0 total</div>
+        <div class="summary-card__meta" id="summarySuitesMeta">–</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Tests</div>
+        <div class="summary-card__value" id="summaryTests">0 total</div>
+        <div class="summary-card__meta" id="summaryTestsMeta">–</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Snapshots</div>
+        <div class="summary-card__value" id="summarySnapshots">0 total</div>
+        <div class="summary-card__meta" id="summarySnapshotsMeta">–</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Time</div>
+        <div class="summary-card__value" id="summaryTime">–</div>
+        <div class="summary-card__meta" id="summaryTimeMeta">Run duration</div>
+      </article>
+    </section>
+
+    <section class="suite-results" aria-label="Suite results">
+      <h2>Suites</h2>
+      <ul id="suiteList" class="suite-list">
+        <li class="suite-list__placeholder">No suites executed yet.</li>
+      </ul>
+    </section>
+
+    <section class="raw-output" aria-label="Raw Jest output">
+      <div class="raw-output__header">
+        <h2>Execution log</h2>
+        <button class="raw-output__toggle" type="button" onclick="toggleRaw()">Toggle raw log</button>
+      </div>
+      <pre id="output" class="raw-output__log" aria-live="polite">Test output will appear here...</pre>
+    </section>
+  </main>
+
+  <script>
+    const statusBadge = document.getElementById('status');
+    const runBtn = document.getElementById('runBtn');
+    const suiteList = document.getElementById('suiteList');
+    const output = document.getElementById('output');
+
+    function setStatus(state, label) {
+      statusBadge.className = `status-badge status-${state}`;
+      statusBadge.textContent = label;
+    }
+
+    function toggleRaw() {
+      output.classList.toggle('collapsed');
+    }
+
+    function renderSuites(suites) {
+      suiteList.innerHTML = '';
+      if (!suites.length) {
+        const li = document.createElement('li');
+        li.className = 'suite-list__placeholder';
+        li.textContent = 'No suites executed yet.';
+        suiteList.appendChild(li);
+        return;
+      }
+      suites.forEach(({ status, name }) => {
+        const li = document.createElement('li');
+        li.className = `suite-item suite-item--${status}`;
+        li.innerHTML = `
+          <span class="suite-item__indicator" aria-hidden="true"></span>
+          <span class="suite-item__status">${status.toUpperCase()}</span>
+          <span class="suite-item__name">${name}</span>
+        `;
+        suiteList.appendChild(li);
+      });
+    }
+
+    function setSummary(idPrefix, summaryLine) {
+      const valueEl = document.getElementById(`summary${idPrefix}`);
+      const metaEl = document.getElementById(`summary${idPrefix}Meta`);
+      if (!summaryLine) {
+        valueEl.textContent = '–';
+        metaEl.textContent = '';
+        return;
+      }
+      const stats = summaryLine.split(':')[1]?.trim() || '';
+      if (idPrefix === 'Time') {
+        valueEl.textContent = stats || '–';
+        metaEl.textContent = 'Run duration';
+        return;
+      }
+      const pieces = stats.split(',').map(part => part.trim()).filter(Boolean);
+      const [counts, ...rest] = pieces;
+      valueEl.textContent = counts || stats;
+      metaEl.textContent = rest.length ? rest.join(', ') : '';
+    }
+
+    function parseJest(stdout) {
+      const lines = stdout.split('\n');
+      const suites = [];
+      let suitesLine = null;
+      let testsLine = null;
+      let snapshotsLine = null;
+      let timeLine = null;
+
+      lines.forEach((line) => {
+        const clean = line.replace(/\u001b\[[0-9;]*m/g, '');
+        const trimmed = clean.trim();
+        if (trimmed.startsWith('PASS ') || trimmed.startsWith('FAIL ')) {
+          const status = trimmed.startsWith('PASS ') ? 'pass' : 'fail';
+          suites.push({ status, name: trimmed.slice(5).trim() });
+        }
+        if (trimmed.startsWith('Test Suites:')) suitesLine = trimmed;
+        if (trimmed.startsWith('Tests:')) testsLine = trimmed;
+        if (trimmed.startsWith('Snapshots:')) snapshotsLine = trimmed;
+        if (trimmed.startsWith('Time:')) timeLine = trimmed;
+      });
+
+      renderSuites(suites);
+      setSummary('Suites', suitesLine);
+      setSummary('Tests', testsLine);
+      setSummary('Snapshots', snapshotsLine);
+      setSummary('Time', timeLine);
+    }
+
+    async function runTests() {
+      setStatus('running', 'Running…');
+      runBtn.disabled = true;
+      output.textContent = '';
+      renderSuites([]);
+      setSummary('Suites');
+      setSummary('Tests');
+      setSummary('Snapshots');
+      setSummary('Time');
+
+      try {
+        const response = await fetch('/HW_TESTS/run', { method: 'POST' });
+        const result = await response.json();
+        const stdout = result.stdout || '';
+        const stderr = result.stderr || '';
+        const combinedLog = [stdout, stderr].filter(Boolean).join('\n');
+        const decoratedLog =
+          (stdout || '') +
+          (stderr ? '\n--- stderr ---\n' + stderr : '') +
+          (result.error ? '\n--- error ---\n' + result.error : '');
+
+        output.textContent = decoratedLog || 'No output captured.';
+
+        parseJest(combinedLog || decoratedLog);
+        setStatus(result.success ? 'pass' : 'fail', result.success ? 'All green' : 'Failures');
+      } catch (err) {
+        setStatus('error', 'Error');
+        output.textContent = 'Failed to run tests: ' + err.message;
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+
+</html>

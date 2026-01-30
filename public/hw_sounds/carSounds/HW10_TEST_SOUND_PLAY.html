@@ -1,0 +1,30 @@
+<html>
+<body>
+<body>
+<div>sound</div>
+
+<!--
+<div><video controls id="race_video" width="100%" height="100%" autoplay >
+    <source src="video_race.mp4" type="video/mp4">
+</video></div>-->
+
+<audio id="1" controls="controls"><source src="1_14_CarChase.wav" type="audio/x-wav" /></audio></div>
+<audio id="2" controls="controls"><source src="1_19_CarCrash.wav" type="audio/x-wav" /></audio>
+<audio id="3" controls="controls"><source src="12_Crash.wav" type="audio/x-wav" /></audio>
+<audio id="4" controls="controls"><source src="15_Crash.wav" type="audio/x-wav" /></audio>
+<audio id="5" controls="controls"><source src="16_Crash.wav" type="audio/x-wav" /></audio>
+<audio id="6" controls="controls"><source src="21_Car.wav" type="audio/x-wav" /></audio>
+<audio id="7" controls="controls"><source src="40_Auto.wav" type="audio/x-wav" /></audio>
+
+<Script>  
+    function playSound(){
+        var i = Math.floor(10*Math.random(1,6));
+        console.log("play" + i);
+        document.getElementById(i).play();
+    }
+    setInterval(playSound, 1000);    
+</Script>
+
+</body>
+</html>
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Robot Calibration</title>
+    <link rel="stylesheet" href="/css/stylesHW.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(160deg, #1f1a2b 0%, #261626 40%, #2b1018 100%);
+            color: #f4f8ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .notice-card {
+            max-width: 640px;
+            padding: 36px 48px;
+            background: rgba(12, 20, 32, 0.9);
+            border: 1px solid rgba(94, 138, 196, 0.45);
+            border-radius: 16px;
+            box-shadow: 0 22px 60px rgba(3, 12, 25, 0.45);
+            text-align: center;
+        }
+
+        .notice-card h1 {
+            margin: 0 0 18px;
+            font-size: 32px;
+            letter-spacing: 0.04em;
+        }
+
+        .notice-card p {
+            margin: 12px 0;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #d2e3ff;
+        }
+
+        .notice-card .status {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: rgba(255, 95, 109, 0.15);
+            color: #ff787f;
+            border: 1px solid rgba(255, 82, 99, 0.4);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="notice-card">
+        <h1>Robot Calibration</h1>
+        <p><%= typeof message === 'string' ? message : 'Calibration requires an active robot connection.' %></p>
+        <p>Connect the robot controller and restart the service, then refresh this page to begin the calibration
+            workflow.</p>
+        <span class="status">Robot Offline</span>
+    </div>
+</body>
+
+</html>

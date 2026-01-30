@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAYSPUZZLE</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff0000 0%, #fce625 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .puzzle-container {
+            position: relative;
+            background-color: #34495e;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 0 auto 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 5px;
+            margin: 0 auto;
+        }
+
+        .tile {
+            background-color: #3498db;
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            aspect-ratio: 1/1;
+            user-select: none;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tile:hover {
+            background-color: #2980b9;
+            transform: scale(1.03);
+        }
+
+        .empty {
+            background-color: transparent;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        .empty:hover {
+            background-color: transparent;
+            transform: none;
+        }
+
+        .tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        #shuffle-btn {
+            background-color: #e74c3c;
+        }
+
+        #shuffle-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+            display: none;
+        }
+
+        .difficulty {
+            margin: 15px 0;
+        }
+
+        select {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .instructions {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .instructions p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .image-controls {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>RAYS SLIDING PUZZLE GAME</h1>
+       
+
+        <div class="game-info">
+            <div>Moves: <span id="move-count">0</span></div>
+            <div>Time: <span id="timer">0</span>s</div>
+        </div>
+
+        <div class="difficulty">
+            <label for="size-select">Grid Size: </label>
+            <select id="size-select">
+                <option value="3">3x3</option>
+                <option value="4" selected>4x4</option>
+                <option value="5">5x5</option>
+            </select>
+        </div>
+
+        <div class="image-controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <button id="load-image-btn">Load Image</button>
+        </div>
+
+        <div class="puzzle-container">
+            <div class="puzzle-grid" id="puzzle-grid"></div>
+        </div>
+
+        <div class="controls">
+            <button id="shuffle-btn">Shuffle</button>
+            <button id="reset-btn">New Game</button>
+        </div>
+
+        <div class="message" id="message">Congratulations! You solved the puzzle!</div>
+
+        <!--
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <p>1. Click on a tile next to the empty space to move it</p>
+            <p>2. Arrange the tiles in numerical order from 1 to 15</p>
+            <p>3. The empty space should be at the bottom right</p>
+            <p>4. Try to solve the puzzle in as few moves as possible!</p>
+        </div>
+        -->
+    </div>
+<p> RAYS CONCEPT DEVELOPMENT BV. copyright &copy; 2025</p>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const puzzleGrid = document.getElementById('puzzle-grid');
+            const moveCountElement = document.getElementById('move-count');
+            const timerElement = document.getElementById('timer');
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const messageElement = document.getElementById('message');
+            const sizeSelect = document.getElementById('size-select');
+            const imageInput = document.getElementById('imageInput');
+            const loadImageBtn = document.getElementById('load-image-btn');
+
+            // Game state
+            let gridSize = 4;
+            let tiles = [];
+            let imageParts = []; // Array to store image parts
+            let emptyCell = { row: gridSize - 1, col: gridSize - 1 };
+            let moveCount = 0;
+            let timer = 0;
+            let timerInterval = null;
+            let gameStarted = false;
+            let imageLoaded = false;
+
+            // Initialize the game
+            function initGame() {
+                clearInterval(timerInterval);
+                timer = 0;
+                moveCount = 0;
+                gameStarted = false;
+                updateMoveCount();
+                updateTimer();
+
+                gridSize = parseInt(sizeSelect.value);
+                emptyCell = { row: gridSize - 1, col: gridSize - 1 };
+
+                // Generate tiles
+                tiles = [];
+                for (let i = 0; i < gridSize * gridSize - 1; i++) {
+                    tiles.push(i + 1);
+                }
+                tiles.push(0); // 0 represents the empty tile
+
+                // Render the grid
+                renderGrid();
+
+                // Hide message
+                messageElement.style.display = 'none';
+            }
+
+            // Render the grid
+            function renderGrid() {
+                puzzleGrid.innerHTML = '';
+                puzzleGrid.style.width = `${gridSize * 80}px`;
+                puzzleGrid.style.height = `${gridSize * 80}px`;
+                puzzleGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const index = i * gridSize + j;
+                        const value = tiles[index];
+
+                        const tile = document.createElement('div');
+                        tile.className = value === 0 ? 'tile empty' : 'tile';
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.dataset.value = value;
+                        tile.id = "tile" + value;
+
+                        // Add image if available
+                        if (value !== 0 && imageParts[value - 1]) {
+                            const img = document.createElement('img');
+                            img.src = imageParts[value - 1];
+                            img.alt = `Part ${value}`;
+                            tile.appendChild(img);
+                        } else if (value !== 0) {
+                            // Show number if no image
+                            tile.textContent = value;
+                        }
+
+                        if (value !== 0) {
+                            tile.addEventListener('click', () => {
+                                if (!gameStarted) {
+                                    startTimer();
+                                    gameStarted = true;
+                                }
+                                moveTile(i, j);
+                            });
+                        }
+                        puzzleGrid.appendChild(tile);
+                    }
+                }
+            }
+
+            // Move a tile
+            function moveTile(row, col) {
+                // Check if the tile is adjacent to the empty cell
+                if (
+                    (Math.abs(row - emptyCell.row) === 1 && col === emptyCell.col) ||
+                    (Math.abs(col - emptyCell.col) === 1 && row === emptyCell.row)
+                ) {
+                    // Swap the tile with the empty cell
+                    const emptyIndex = emptyCell.row * gridSize + emptyCell.col;
+                    const tileIndex = row * gridSize + col;
+
+                    // Swap values
+                    [tiles[emptyIndex], tiles[tileIndex]] = [tiles[tileIndex], tiles[emptyIndex]];
+
+                    // Update empty cell position
+                    emptyCell = { row, col };
+
+                    // Update move count
+                    moveCount++;
+                    updateMoveCount();
+
+                    // Re-render the grid
+                    renderGrid();
+
+                    // Check if the puzzle is solved
+                    checkWin();
+                }
+            }
+
+            // Update move count display
+            function updateMoveCount() {
+                moveCountElement.textContent = moveCount;
+            }
+
+            // Start the timer
+            function startTimer() {
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timer++;
+                    updateTimer();
+                }, 1000);
+            }
+
+            // Update timer display
+            function updateTimer() {
+                timerElement.textContent = timer;
+                if(timer>3 && timer<5){alert("hurry");}
+                if(timer>10 && timer<12){alert("really hurry");}
+                if(timer>15 && timer<17){
+                    alert("time is up!");
+                    //shuffleTiles();
+                    initGame();
+                }
+            }
+
+            // Check if the puzzle is solved
+            function checkWin() {
+                for (let i = 0; i < tiles.length - 1; i++) {
+                    if (tiles[i] !== i + 1) {
+                        return;
+                    }
+                }
+
+                // Puzzle is solved
+                clearInterval(timerInterval);
+                messageElement.style.display = 'block';
+            }
+
+            // Shuffle the tiles
+            function shuffleTiles() {
+                if (!gameStarted) {
+                    startTimer();
+                    gameStarted = true;
+                }
+
+                // Simple shuffle by making random moves
+                const shuffleMoves = gridSize * 100;
+
+                for (let i = 0; i < shuffleMoves; i++) {
+                    const possibleMoves = [];
+
+                    // Check all adjacent cells to the empty cell
+                    if (emptyCell.row > 0) possibleMoves.push({ row: emptyCell.row - 1, col: emptyCell.col });
+                    if (emptyCell.row < gridSize - 1) possibleMoves.push({ row: emptyCell.row + 1, col: emptyCell.col });
+                    if (emptyCell.col > 0) possibleMoves.push({ row: emptyCell.row, col: emptyCell.col - 1 });
+                    if (emptyCell.col < gridSize - 1) possibleMoves.push({ row: emptyCell.row, col: emptyCell.col + 1 });
+
+                    // Select a random move
+                    const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+                    // Make the move
+                    const emptyIndex = emptyCell.row * gridSize + emptyCell.col;
+                    const moveIndex = randomMove.row * gridSize + randomMove.col;
+
+                    // Swap values
+                    [tiles[emptyIndex], tiles[moveIndex]] = [tiles[moveIndex], tiles[emptyIndex]];
+
+                    // Update empty cell position
+                    emptyCell = randomMove;
+                }
+
+                // Reset move count
+                moveCount = 0;
+                updateMoveCount();
+
+                // Re-render the grid
+                renderGrid();
+            }
+
+            // Process and cut the image
+            function processImage() {
+                if (!imageInput.files[0]) {
+                    alert('Please select an image first!');
+                    return;
+                }
+
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function (e) {
+                    cutImageIntoParts(e.target.result);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+
+            // Cut image into parts based on grid size
+            function cutImageIntoParts(imageUrl) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+
+                img.onload = function () {
+                    const width = img.width;
+                    const height = img.height;
+
+                    // Calculate dimensions for each part
+                    const partWidth = Math.floor(width / gridSize);
+                    const partHeight = Math.floor(height / gridSize);
+
+                    // Clear and resize imageParts array
+                    imageParts = new Array(gridSize * gridSize - 1);
+
+                    // Create each part
+                    for (let row = 0; row < gridSize; row++) {
+                        for (let col = 0; col < gridSize; col++) {
+                            // Skip the last part (empty tile)
+                            if (row === gridSize - 1 && col === gridSize - 1) continue;
+                            
+                            // Set canvas size for this part
+                            canvas.width = partWidth;
+                            canvas.height = partHeight;
+
+                            // Clear canvas
+                            ctx.clearRect(0, 0, partWidth, partHeight);
+
+                            // Draw the specific part of the image
+                            ctx.drawImage(
+                                img,
+                                col * partWidth,     // source x
+                                row * partHeight,    // source y
+                                partWidth,           // source width
+                                partHeight,          // source height
+                                0,                   // destination x
+                                0,                   // destination y
+                                partWidth,           // destination width
+                                partHeight           // destination height
+                            );
+
+                            // Convert to data URL and store in array
+                            const dataUrl = canvas.toDataURL('image/png');
+                            const partNumber = row * gridSize + col;
+                            imageParts[partNumber] = dataUrl;
+                        }
+                    }
+                    
+                    imageLoaded = true;
+                    // Re-render the grid with the new image parts
+                    renderGrid();
+                };
+                
+                img.src = imageUrl;
+            }
+
+            // Event listeners
+            shuffleBtn.addEventListener('click', shuffleTiles);
+            resetBtn.addEventListener('click', initGame);
+            sizeSelect.addEventListener('change', initGame);
+            loadImageBtn.addEventListener('click', processImage);
+
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<title>AVFX</title>
+
+<header>
+    <link rel="stylesheet" href="css/styles_devices.css">
+
+</header>
+
+<body>
+    <div class="columns">
+        <div class="column-left">
+            <div class=device_container>
+                <% if (GLOBALS.configDevices.esp32Devices && GLOBALS.configDevices.esp32Devices.length>0){%>
+                    <%- include('__HW_DEVICE_ESP1.ejs') %>
+                        <% } else { %>
+                            <div>NO ESPS FOUND</div>
+                            <% } %>
+            </div>
+
+            <div class=device_container>
+                <% if (GLOBALS.configDevices.raspberryPiDevices && GLOBALS.configDevices.raspberryPiDevices.length>0){
+                    %>
+                    <%- include('__HW_DEVICE_CAMS_RASPI.ejs') %>
+                        <% } else { %>
+                            <div>NO RASPBERRIES FOUND</div>
+                            <% } %>
+            </div>
+
+            <div class=device_container>
+                <% if (GLOBALS.configDevices.devicesGoPro && GLOBALS.configDevices.devicesGoPro.length>0){ %>
+                    <%- include('__HW_DEVICE_CAMS_GOPRO.ejs') %>
+                        <% } else { %>
+                            <div>NO GOPROS FOUND</div>
+                            <% } %>
+            </div>
+        </div>
+
+        <div class="column-right">
+            <div id="deviceMessages" class="device_communication">
+                <div class="device_header">DEVICES COMMUNICATION LOG</div>
+                <div class="device_replies" id="messageList">No messages yet...</div>
+                <button class="device_command" onclick="clearMessages()">🗑️ Clear
+                    Messages</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Function to clear messages
+        function clearMessages() {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = "reset";
+        }
+    </script>
+</body>
+
+</html>

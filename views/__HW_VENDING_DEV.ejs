@@ -1,0 +1,120 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<!--<div class=wide onclick="QRListenerActivate()">QRACTIVATE</div>-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>HW_VENDING</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <!--<link rel="stylesheet" href="css/stylesSliders.css">-->
+</head>
+
+<body class="ui_background">
+
+    <%- include('__HW_LANGUAGE_FLAGS.ejs') %>
+        <%- include('__HW_VENDING_NEXTUP.ejs') %>
+
+            <div onclick="showOverride()">override</div>
+            <script>
+                function showOverride() {
+                    showDIV('DIV_LOG_PROCES');
+                }
+            </script>
+            <div id="DIV_DEV">
+                <div id="DIV_LOG_PROCES" class="debug_override">
+                    <div onclick="hideDIV('DIV_LOG_PROCES')" class="btn">Idle</div>
+                    <div onclick="goto_Idle()" class="btn">Idle</div>
+                    <div onclick="goto_QRscanned()" class="btn">QRscanned</div>
+                    <div onclick="goto_ClientFormCompleted()" class="btn">ClientFormCompleted</div>
+                    <div onclick="goto_orderSummary()" class="btn">orderSummary</div>
+                    <div onclick="goto_placeTheOrder()" class="btn">placeTheOrder</div>
+                </div>
+
+                <div class="it">
+                    <div id=pos class="debug">cursorposition</div>
+                    <div id=IMAGECOUNTER360 class="debug">THIS</div>
+                    <div id="CAT" class="debug">CAT</div>
+                    <div id="CAR" class="debug">CAR</div>
+                </div>
+            </div>
+
+
+            <!--<div id="DIV_UI_PICKING_TICKER" class="ui_picking_ticker"><div id="DIV_CUELINE">CUELINE</div></div>
+        -->
+
+            <div class="hwlogo_client"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+            <div id="DIV_UI_GO_BACK" class="ui_btn_go_back" onclick=goto_go_back()></div>
+
+            <!--
+            <div id="DIV_HIDDEN" class="ui_hidden">
+                <div id="DIV_UI_SELECT_YOUR_TEAM" class="ui_instruction"></div>
+                <div id="DIV_UI_WATCH_THE_CUELINE" class="ui_instruction"></div>
+                <div id="DIV_UI_YOUR_RACE_BEGINS" class="ui_instruction"></div>
+                <div id="DIV_UI_YOUR_RACE_HAS_FINISHED" class="ui_instruction"></div>
+            </div>-->
+
+            <div id="DIV_IDLE">
+                <div id="DIV_UI_WELCOME" class="ui_processHeader"></div>
+                <%- include('__HW_VENDING_IDLE.ejs') %>
+            </div>
+
+            <div id="DIV_QR">
+                <%- include('__HW_VENDING_SCAN_QR.ejs') %>
+            </div>
+
+            <div id="DIV_FORMS" class="block_centered_divs">
+                <%- include('__HW_VENDING_FORM.ejs') %>
+            </div>
+
+            <div id="DIV_TITLEHEADER" class="ui_titleHeader"></div>
+            <div id="DIV_UI_PROCESS_HEADER" class="ui_processHeader"></div>
+
+            <div id="DIV_CONFIRM_SEND_ORDER_TO_ROBOT">
+                <div id="DIV_ORDER_MY_CARS" class="block_centered_divsx">
+                </div>
+            </div>
+
+            <div id="DIV_ORDER_WAS_SEND_TO_CUE" class="blockHeader">
+                <div id="DIV_UI_ROBOT_IS_PICKING" class="ui_instruction"></div>
+            </div>
+
+            <div id="DIV_CALL_FOR_AN_OPERATOR">
+                <div id="UI_CALL_OPERATOR" class="ui_instruction"></div>
+            </div>
+
+            <div id="DIV_ORDER_SUMMARY" class="ui_block_cars_selected">
+                <div id="DIV_UI_YOUR_CARS" class="ui_your_cars"></div>
+                <% for(let i=1; i <=maxCarsPerOrder; i++) { %>
+                    <div id="ORDER_CAR_SELECTED_<%= i %>" class="ui_car_selected">
+                        <%= i %>
+                    </div>
+                    <% } %>
+                        <div id="DIV_UI_PLACE_ORDER" class="ui_btn_placeOrder" onclick=goto_placeTheOrder()>
+                        </div>
+            </div>
+
+            <div id="DIV_CARS_SELECTION_PROCESS">
+                <div id="DIV_UI_SELECT_YOUR_CARS" class="ui_instruction"></div>
+                <div id="DIV_SELECTION_IS_MAX_TO_ORDER" class="ui_block_gotoorder">
+                    <div id="DIV_UI_ARE_YOU_SURE" class="ui_proceed_to_order" onclick=goto_orderSummary()></div>
+                </div>
+                <div id=DIV_CATEGORIES class="ui_categoryContainer"></div>
+                <%- include('__HW_VENDING_360.ejs') %>
+
+                    <div id="DIV_SELECTION_OF_CARS" class="ui_selectionOfCars">
+                        <% for(let i=1; i <=maxCarsPerOrder; i++) { %>
+                            <div class="ui_selectionOfCars_Car<%= i %>">
+                                <div onclick="deleteCarFromSelection(<%= i - 1 %>)" class="ui_deleteCar">x</div>
+                                <div id="CAR_SELECTED_<%= i %>" class="ui_car_selected"></div>
+                            </div>
+                            <% } %>
+                    </div>
+                    <div id=DIV_CARSINCAT class="ui_carsInCategory"></div>
+            </div>
+            </div>
+
+            <%- include('__HW_SIO.ejs') %>
+                <%- include('__HW_VENDING_LOGIC.ejs') %>
+
+</body>

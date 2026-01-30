@@ -1,0 +1,402 @@
+<script>
+    let userName;
+    let userEmail;
+    const timeToIdle = 5000;
+    let car360Assets = "";
+    let selectedCarsTotal = 0;
+    let carSelectionArray = [];//new Array(maxCarsPerOrder);
+
+    // Get terminal ID from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const terminalId = urlParams.get('t') || '1';
+    
+    goto_Idle();
+
+    function resetDIVS() {
+
+        hideDIV('DIV_IDLE');
+        hideDIV('DIV_FORMS');
+        hideDIV('DIV_CATEGORIES');
+        hideDIV('DIV_SELECTION_OF_CARS');
+        hideDIV('DIV_CARS_SELECTION_PROCESS');
+        hideDIV('DIV_CARSINCAT');
+        hideDIV('DIV_ORDER_SUMMARY');
+        hideDIV('DIV_UI_ARE_YOU_SURE');
+        hideDIV('DIV_UI_PROCESS_HEADER');
+        hideDIV('DIV_UI_PLACE_ORDER');
+        hideDIV('DIV_CONFIRM_SEND_ORDER_TO_ROBOT');
+        hideDIV('DIV_ORDER_WAS_SEND_TO_CUE');
+        hideDIV('DIV_CALL_FOR_AN_OPERATOR');
+        hideDIV('DIV_SELECTION_IS_MAX_TO_ORDER');
+        hideDIV('DIV_UI_SELECT_YOUR_CARS');
+        hideDIV('DIV_UI_GO_BACK');
+        hideDIV('DIV_360');
+    }
+    function goto_QRscanned() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>QRscanned";
+        document.getElementById('DIV_UI_PROCESS_HEADER').innerHTML = UI_LANG.UI_SELECT_YOUR_CARS;
+        cleanupQRReader();
+        resetDIVS();
+        showDIV('DIV_FORMS');
+    };
+
+    function goto_Idle() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>reset & goto_Idle";
+        resetDIVS();
+        showDIV('DIV_IDLE');
+        QRListenerActivate();
+        var video = document.getElementById('DIV_UI_VIDEO_IDLE');
+        video.play();
+        document.getElementById('HW_INPUTFORM').reset();
+    };
+
+    function goto_ClientFormCompleted() {
+        document.getElementById('DIV_UI_PROCESS_HEADER').innerHTML = "";
+        document.getElementById("DIV_UI_SELECT_YOUR_CARS").innerHTML = UI_LANG.UI_SELECT_YOUR_CARS;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_ClientFormCompleted";
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>userName:" + userName;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>userEmail:" + userEmail;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>qr:" + QRSCANNED;
+
+        // client has filled out the form (name + email)
+        if (userName != null && userEmail != null) {
+            resetDIVS();
+            goto_selectionProces();
+        } else {
+            alert("username and or email not correct");
+        };
+    }
+
+    function goto_go_back() {
+        resetDIVS();
+        showDIV('DIV_CATEGORIES');
+        showDIV('DIV_CARS_SELECTION_PROCESS');
+        showDIV('DIV_SELECTION_OF_CARS');
+        SIO_getCats();
+    }
+    function goto_selectionProces() {
+
+        console.log("goto_selectionProces");
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_selectionProces";
+        // client has filled out the form (name + email)
+        resetDIVS();
+        showDIV('DIV_CATEGORIES');
+        showDIV('DIV_CARS_SELECTION_PROCESS');
+        showDIV('DIV_SELECTION_OF_CARS');
+        //showDIV('DIV_CARSINCAT');
+        SIO_getCats();
+    }
+
+    /*
+    function goto_selectionCatSelected() {
+        console.log("goto_selectionCatSelected");
+        alert("goto_selectionCatSelected");
+        hideDIV('DIV_CATEGORIES');
+        showDIV("DIV_CARSINCAT");
+        alert("show go back");
+        showDIV("DIV_UI_GO_BACK");
+    }*/
+
+    function goto_selectionIsMax() {
+        console.log("goto_selectionIsMax");
+        resetDIVS();
+
+        document.getElementById('DIV_UI_PROCESS_HEADER').innerHTML = UI_LANG.UI_SELECTION_IS_MAX;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_selectionIsMax";
+
+        showDIV("DIV_CARS_SELECTION_PROCESS");
+        showDIV("DIV_SELECTION_IS_MAX_TO_ORDER");
+        showDIV("DIV_UI_GO_BACK");
+        showDIV("DIV_SELECTION_OF_CARS");
+        showDIV('DIV_SELECTION_IS_MAX_TO_ORDER');
+        showDIV('DIV_ORDER_SUMMARY');
+        showDIV('DIV_UI_PLACE_ORDER');
+
+    }
+
+    function goto_orderSummary() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>";
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_orderSummary";
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>name:" + userName;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>email:" + userEmail;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>QR:" + QRSCANNED;
+        for (let c = 0; c < maxCarsPerOrder; c++) {
+            document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>car:" + carSelectionArray[c];
+        }
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>";
+        // show selection of cars for final confirmation
+        resetDIVS();
+        showDIV('DIV_ORDER_SUMMARY');
+    }
+
+    function goto_placeTheOrder() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_placeTheOrder";
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>name:" + userName;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>email:" + userEmail;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>QR:" + QRSCANNED;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>terminal:" + terminalId;
+
+        //alert("goto_placeTheOrder"+QRSCANNED);
+        let clientOrder = {
+            userName: userName,
+            userEmail: userEmail,
+            userQR: QRSCANNED,
+            // startTime: '2022-10-06T13:03:17.698Z',
+            // endTime: '2022-10-06T13:03:57.698Z',
+            // raceTimeInSeconds: 0,
+            userCars: carSelectionArray,
+            terminalId: terminalId
+        }
+
+        console.log(`Order details - Name: ${userName}, Email: ${userEmail}, QR Code: ${QRSCANNED}, Terminal: ${terminalId}, cars:${carSelectionArray}`);
+
+        fetch('/CLIENT_ORDER_PLACED', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(clientOrder)
+        }).then(response => {
+            if (response.ok) {
+                console.log('CLIENT_ORDER_PLACED POST request sent successfully');
+            } else {
+                console.error('Failed to send Client Order POST request');
+            }
+        }).catch(error => console.error('Error:', error));
+
+        goto_OrderWasAddedToCueLine();
+        resetCarSelection();
+        showDIV('DIV_ORDER_WAS_SEND_TO_CUE');
+    }
+
+    function goto_OrderWasAddedToCueLine() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_RobotIsPicking";
+        // empty screen, wait for robot to be completed, then go to Idle
+        resetDIVS();
+        showDIV('DIV_ORDER_WAS_SEND_TO_CUE');
+        setTimeout(goto_Idle, timeToIdle);
+    }
+
+    function goto_CallForAnOperator() {
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>goto_CallForAnOperator";        
+        resetDIVS();
+        showDIV('DIV_CALL_FOR_AN_OPERATOR');
+    }
+
+    function resetCarSelection() {
+        for (x = 0; x < maxCarsPerOrder; x++) {
+            deleteCarFromSelectionForReset(x);
+        }
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>resetCarSelection complete";
+    }
+
+
+    function addCar360ToSelection() {
+
+        console.log("addCar360ToSelection maxCarsPerOrder:" + maxCarsPerOrder);
+        let carWasAdded = false;
+        selectedCarsTotal = 0;
+        for (let c = 0; c < maxCarsPerOrder; c++) {
+            let thiscar = carSelectionArray[c];
+            if (carSelectionArray[c] != undefined) {                
+                selectedCarsTotal++; // there is already a car in this position in the array
+                if (selectedCarsTotal == maxCarsPerOrder) {
+                    goto_selectionIsMax();
+
+                }
+            }
+
+            if (car360Assets != "" && carSelectionArray[c] == undefined && selectedCarsTotal < maxCarsPerOrder && carWasAdded == false) {
+                // add the selected car to the carSelection if that position in the array is empty
+                carSelectionArray[c] = car360Assets;
+                carWasAdded = true;
+
+                ////////////////////////////////// 
+                // ADD RESERVATION FOR THIS CAR                          
+                carReservationAdd(car360Assets);
+
+                selectedCarsTotal++;
+                document.getElementById('DIV_LOG_PROCES').innerHTML += "add car:" + carSelectionArray[c] + "tot:" + selectedCarsTotal;
+
+                if (selectedCarsTotal == maxCarsPerOrder) {
+                    goto_selectionIsMax();
+
+                } else {
+                    showDIV("DIV_CATEGORIES");
+                }
+            }
+
+            if (carSelectionArray[c] != undefined) {
+                // show car in list
+                let divnr = c + 1;
+                document.getElementById('CAR_SELECTED_' + divnr).innerHTML = "<br><img class=ui_selectedCarImage src=" + '/hw_cars/' + carSelectionArray[c] + '/images/Photo025.png>';
+                document.getElementById('ORDER_CAR_SELECTED_' + divnr).innerHTML = ">" + carSelectionArray[c];
+                document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>added car" + carSelectionArray[c] + " tot:" + selectedCarsTotal;
+            }
+        }
+
+        // Log the final state of the car selection array
+        console.log("Final carSelectionArray state:");
+        for (let c = 0; c < maxCarsPerOrder; c++) {
+            console.log("car" + c + ":" + carSelectionArray[c]);
+        }
+
+        // car360 is added to selection, back to categories                 
+        if (selectedCarsTotal < maxCarsPerOrder) {
+            showDIV("DIV_CATEGORIES");
+        }
+        hideDIV("DIV_CARSINCAT");
+        hideDIV("DIV_360");
+    }
+
+    function deleteCarFromSelection(x) {
+        hideDIV('DIV_SELECTION_IS_MAX_TO_ORDER');
+        hideDIV('DIV_UI_PLACE_ORDER');
+        selectedCarsTotal--;
+        let carToDelete = carSelectionArray[x];
+
+        ////////////////////////////////// 
+        // REMOVE RESERVATION FOR THIS CAR
+        carReservationMin(carToDelete);
+
+        carSelectionArray[x] = undefined;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>deleted car" + carToDelete + " tot:" + selectedCarsTotal;
+        for (let c = 0; c < maxCarsPerOrder; c++) {
+            let divnr = c + 1;
+            if (carSelectionArray[c] != undefined) {
+                document.getElementById('CAR_SELECTED_' + divnr).innerHTML += "<br><img class=ui_selectedCarImage src=" + '/hw_cars/' + carSelectionArray[c] + '/images/Photo025.png>';
+            } else {
+                document.getElementById('CAR_SELECTED_' + divnr).innerHTML = "";
+            }
+        }
+    }
+
+    function deleteCarFromSelectionForReset(x) {
+        hideDIV('DIV_SELECTION_IS_MAX_TO_ORDER');
+        selectedCarsTotal--;
+        let carToDelete = carSelectionArray[x];
+        // carReservationMin(carToDelete);
+        // remove reservation only after actual picking is done
+        carSelectionArray[x] = undefined;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>deleted car" + carToDelete + " tot:" + selectedCarsTotal;
+        for (let c = 0; c < maxCarsPerOrder; c++) {
+            let divnr = c + 1;
+            if (carSelectionArray[c] != undefined) {
+                document.getElementById('CAR_SELECTED_' + divnr).innerHTML += "<br><img class=ui_selectedCarImage src=" + '/hw_cars/' + carSelectionArray[c] + '/images/Photo025.png>';
+            } else {
+                document.getElementById('CAR_SELECTED_' + divnr).innerHTML = "";
+            }
+        }
+        // if a car is deleted from the selection, make sure to show the categories again
+        hideDIV("DIV_CARSINCAT");
+        hideDIV("DIV_360");
+        showDIV("DIV_CATEGORIES");
+    }
+
+    function calculateCategoryBlockWidth(div) {
+        const computedStyle = window.getComputedStyle(div);
+        const width = parseInt(computedStyle.getPropertyValue('width'), 10);
+        console.log('Total width of categoryBlock:' + width + " / / " + document.body.clientWidth);
+        return width;
+    }
+
+    // add reservation when car is preselected during selection process
+    // remove reservation when car is deleted from preselection
+    // remove reservation when order is placed           
+
+    function carReservationAdd(carAsset) {
+
+        fetch('/CLIENT_CAR_RESERVE_ADD', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ carAsset: carAsset })
+        }).then(response => {
+            if (response.ok) {
+                console.log('CLIENT_CAR_RESERVE_ADD POST request sent successfully');
+            } else {
+                console.error('Failed to send POST request');
+            }
+        }).catch(error => console.error('Error:', error));
+
+    }
+    function carReservationMin(carAsset) {
+        fetch('/CLIENT_CAR_RESERVE_MIN', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ carAsset: carAsset })
+        }).then(response => {
+            if (response.ok) {
+                console.log('carReservationMin POST request sent successfully');
+            } else {
+                console.error('Failed to send POST request');
+            }
+        }).catch(error => console.error('Error:', error));
+    }
+
+    function SIO_getCats() {
+        resetDIVS();
+        showDIV("DIV_CARS_SELECTION_PROCESS");
+        showDIV("DIV_CATEGORIES");
+        showDIV("DIV_SELECTION_OF_CARS");
+        let terminal = "HWCLIENT";
+        let action = "CLIENT_GETCATS";
+        let message = CAT;
+        let MSG = terminal + "___" + action + "___" + message;
+        S2.emit('MFC', MSG);
+    };
+    function SIO_getCarsInCat(CAT) {
+        let terminal = "HWCLIENT";
+        let action = "CLIENT_GETCARSINCAT";
+        let message = CAT;
+        let MSG = terminal + "___" + action + "___" + message;
+        S2.emit('MFC', MSG);
+        resetDIVS();
+        showDIV("DIV_CARS_SELECTION_PROCESS");
+        showDIV("DIV_CARSINCAT");
+        showDIV("DIV_SELECTION_OF_CARS");
+        showDIV("DIV_UI_GO_BACK");
+    };
+
+
+
+    S2.on("MFS_VENDING_JSON", (data) => {  // Listen for same event
+        switch (data.action) {
+            case "SIO_LISTCATS":
+                const catsArray = data.categories;
+                let CATS = "<div class=ui_categoryArray id=ui_categoryArray>";
+                catsArray.forEach(CAT => {
+                    let img = {};
+                    img.src = "hw_cars/" + CAT.carAssets + "/images/Photo010.png";
+                    img.onload = () => img.classList.add("loaded"); // Add this line
+
+                    CATS += "<div onclick=SIO_getCarsInCat('" + CAT.categoryId + "') class=ui_categoryItem>";
+                    CATS += "<div class=\"ui_categoryItemName \">" + CAT.categoryName + "</div>";
+                    //MSG += CAT.categoryCarsQty; xsrc=\"hw_img/HWLOGO.png\" lazy-load
+                    //CATS += "<img  class=\"ui_categoryImage\" src=\"hw_cars/" + CAT.carAssets + "/images/Photo010.png\">";
+                    CATS += "<img  class=\"ui_categoryImage\" src=\"" + img.src + "\">";
+
+                    CATS += "</div>";
+                });
+                CATS += "</div>";
+                document.getElementById("DIV_CATEGORIES").innerHTML = CATS;
+                break;
+
+            case "SIO_LISTCARSINCAT":
+                const carsArray = data.carsincat;
+                let CARS = "";
+                carsArray.forEach(row => {
+                    CARS += "<div>";
+                    CARS += "<img class=ui_btn src='/hw_cars/" + row.carAssets + "/images/Photo001.png' ";
+                    CARS += "onclick=carShow360('" + row.carAssets + "')>";
+                    CARS += "</div>";
+                });
+                showDIV("DIV_CARSINCAT");
+                document.getElementById("DIV_CARSINCAT").innerHTML = CARS;
+                break;
+        }
+    });
+</script>

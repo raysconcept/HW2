@@ -1,0 +1,204 @@
+<!-- CLIENT_SCAN.ejs START -->
+<script>
+    // Constants for QR code validation
+    const QR_PREFIX = "HWQR";
+    const INPUT_TIMEOUT = 2000; // 2 seconds timeout for incomplete QR codes
+    const QR_CODE_LENGTH = 21;  // check format of QR code in Database, HW_DB_ORDER_QRCREATE
+
+    // State variables to track QR scanning status
+    let forceQrElementFocus = false;
+    let QRSCANNED = "";
+    let lastInputTime = 0;
+    let qrInputElement = null;
+    let timeoutInterval = null;
+
+    /**
+     * Handles clicks anywhere in the document to maintain focus on QR input
+     * @param {Event} e - Click event object
+     */
+    function handleDocumentClick(e) {
+        if (forceQrElementFocus && qrInputElement && e.target !== qrInputElement) {
+            e.preventDefault();
+            qrInputElement.focus();
+            console.log("Focus restored to QR Element");
+        }
+    }
+
+    /**
+     * Handles input changes in the QR code reader field
+     * Updates character count and validates input
+     */
+    function handleInput() {
+        const text = qrInputElement.value;
+        lastInputTime = Date.now();
+
+        const charCount = text.length;
+        document.getElementById('charCount').textContent = charCount;
+
+        validateAndProcessQR(text, charCount);
+    }
+
+    /**
+     * Checks for timeout on QR code input and resets if needed
+     * Triggers after INPUT_TIMEOUT milliseconds of inactivity
+     */
+    function handleTimeout() {
+        if (Date.now() - lastInputTime > INPUT_TIMEOUT && qrInputElement.value.length > 0) {
+            console.log("QR code input timeout, resetting input");
+            cleanupQRReader();
+            QRListenerActivate();
+        }
+    }
+
+    /**
+     * Validates QR code format and processes complete codes
+     * @param {string} text - Current QR input value
+     * @param {number} charCount - Length of current input
+     */
+    function validateAndProcessQR(text, charCount) {
+        // Validate QR code prefix
+        if (charCount >= QR_PREFIX.length && !text.startsWith(QR_PREFIX)) {
+            alert("Invalid QR code format");
+            console.log("Invalid QR code format");
+            cleanupQRReader();
+            QRListenerActivate();
+            return;
+        }
+
+        // Process complete QR codes
+        if (charCount === QR_CODE_LENGTH) {
+            QRSCANNED = text;
+            cleanupQRReader();
+            processQRReady();
+        } else {
+            console.log("Read character: " + text);
+            console.log("waiting for " + (QR_CODE_LENGTH - charCount) + " characters");
+        }
+    }
+
+    /**
+     * Initializes the QR code reader interface and handlers
+     */
+    function QRListenerActivate() {
+        console.log("Activated QR Listener");
+
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>QRListenerActivate";
+
+        if (document.getElementById('QRREADER_LISTENING') === null) {
+            createQRInputElement();
+            setupQRInputHandlers();
+        }
+
+        forceQrElementFocus = true;
+    }
+
+    /**
+     * Creates and adds the QR input element to the DOM
+     */
+    function createQRInputElement() {
+        const divInput = '<div id=QRREADER_LISTENING><input type="text" id="qr_input" placeholder="QR" autofocus autocomplete="one-time-code">INPUT QR<span id="charCount">0</span></div>';
+        document.getElementById('QRREADER').innerHTML += divInput;
+        document.getElementById('DIV_LOG_PROCES').innerHTML += "<br>added QRREADER_LISTENING to QRREADER";
+        showDIV('QRREADER_LISTENING');
+    }
+
+    /**
+     * Sets up event listeners and timeout handler for QR input
+     */
+    function setupQRInputHandlers() {
+        qrInputElement = document.getElementById('qr_input');
+        qrInputElement.addEventListener('input', handleInput);
+        qrInputElement.focus();
+
+        // set 1 second interval to check for inactivity, not the same as INPUT_TIMEOUT
+        timeoutInterval = setInterval(handleTimeout, 1000);
+        qrInputElement.dataset.timeoutInterval = timeoutInterval;
+    }
+
+    /**
+     * Cleans up QR reader by removing event listeners and elements
+     */
+    function cleanupQRReader() {
+        if (timeoutInterval) {
+            clearInterval(timeoutInterval);
+            timeoutInterval = null;
+        }
+
+        if (qrInputElement) {
+            qrInputElement.removeEventListener('input', handleInput);
+            qrInputElement = null;
+        }
+
+        const qrReaderListening = document.getElementById('QRREADER_LISTENING');
+        if (qrReaderListening) {
+            qrReaderListening.remove();
+        }
+
+        forceQrElementFocus = false;
+    }
+
+    /**
+     * Handles successful QR code scan
+     * Transitions to form display after valid QR code is received
+     */
+    function processQRReady() {
+        console.log("QR READING IS READY:" + QRSCANNED);
+        // alert(QRSCANNED);
+        if (QRSCANNED == "HWQR_________OPERATOR") {
+            
+            alert("switching to operator mode");
+            window.location.href = "/HW";
+            return;
+        }
+
+        if (QRSCANNED == "HWQR_________FREEPASS") {
+            alert("switching to freepass mode");
+            resetDIVS();
+            showDIV('DIV_FORMS');
+            return;
+
+        }
+        // Send QR code to server for validation
+        fetch('/CLIENT_QR_CHECK_VALIDITY', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userQR: QRSCANNED })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    // QR code is valid, proceed to form
+                    resetDIVS();
+                    showDIV('DIV_FORMS');
+                } else {
+                    // QR code is invalid, show error and reset
+                    console.log("Invalid QR code.");
+                    alert("Invalid or already used QR code. Please scan a valid QR code.");
+                    cleanupQRReader();
+                    QRListenerActivate();
+                }
+            })
+            .catch(error => {
+                console.error('Error validating QR code:', error);
+                alert("Error validating QR code. Please try again.");
+                cleanupQRReader();
+                QRListenerActivate();
+            });
+    }
+
+    // Initialize QR reader when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('click', handleDocumentClick);
+        QRListenerActivate();
+    });
+</script>
+<div id="QRREADER" class="block"></div>
+
+<!--
+<div class=wide onclick="QRListenerActivate()">QR development: activate</div>
+<div class=wide onclick="QRListenerDeactivate()">QR development: de-activate</div>
+-->
+
+<!-- CLIENT_SCAN.ejs END -->

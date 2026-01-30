@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<!--
+WINDOWS INSTALLATION SUPPORT PAGE FOR HOTWHEELS
+-->
+<head>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOTWHEELS WINDOWS INSTALLATION</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f96801 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 980px;
+            width: 100%;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            color: white;
+            padding: 28px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .section {
+            padding: 24px 30px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            color: #2575fc;
+            margin-bottom: 12px;
+        }
+
+        .section ol {
+            margin-left: 20px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        .code-inline {
+            font-family: Consolas, 'Courier New', monospace;
+            background: #f6f7fb;
+            border: 1px solid #e1e4ef;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .note {
+            background: #f9fbff;
+            border-left: 4px solid #2575fc;
+            padding: 10px 12px;
+            margin-top: 12px;
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 18px;
+            background-color: #f9f9f9;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+        }
+
+        pre.code-block {
+            margin: 8px 0 12px;
+            padding: 10px 12px;
+            background: #f6f7fb;
+            border: 1px solid #e1e4ef;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 14px;
+        }
+
+        pre.code-block code {
+        font-family: inherit;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <div class="hwlogo_client"><img src="HWLOGO.png" style="position:absolute; top:0;width:20%;"></div>
+    <div class="container">
+        <div class="header">
+            <h1>Windows Installation (OptiPlex 3020)</h1>
+            <p>Offline setup and project clone procedure.</p>
+        </div>
+
+        <div class="section">
+            <h2>Installation Procedure</h2>
+            <ol>
+                <li>Connect the Optiplex PC to the Internet via Ethernet cable. It is needed to copy the project from GitHub (phase2). Check connection by running <span class="code-inline">ping 8.8.8.8</span> in the powershell. If no connection established - follow the <span class="code-inline">docs/sharing-Internet-from-devPC-to-Optiplex.md instruction</span>.</li>
+                <li>Copy "/windows-install" folder to the Optiplex Desktop.</li>
+                <li>Open PowerShell as an admin. Right-click Start -&gt; PowerShell (Admin).</li>
+                <li>In PowerShell run <span class="code-inline">cd C:\Users\Dell\Desktop\windows-install</span>.</li>
+                <li>In PowerShell run <span class="code-inline">Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</span>; press Y; press Enter.</li>
+                <li>In PowerShell run <span class="code-inline">.\phase1-install-deps-offline.ps1</span>.</li>
+                <li>If there will be git-related error, close PowerShell and open a new one, then repeat steps 3, 4, 6.</li>
+                <li>After successful dependencies installation restart the computer.</li>
+                <li>Start the Docker app from the Desktop (if not started automatically), press skip everywhere, wait until Docker Engine is started.</li>
+                <li>Open PowerShell as an admin.</li>
+                <li>If Docker says so, open PowerShell as admin and run <span class="code-inline">wsl --update</span>, restart the Docker app and wait until you see that Docker Engine is started. If there is no requirement to update the WSL, skip this step.</li>
+                <li>In PowerShell run <span class="code-inline">cd C:\Users\Dell\Desktop\windows-install</span>.</li>
+                <li>In PowerShell run <span class="code-inline">.\phase2-git-manage-clone.ps1</span>. Press Enter twice.</li>
+                <li>The project is copied at <span class="code-inline">C:\Projects\HOTWHEELS</span>.</li>
+                <li>Go to <span class="code-inline">C:\Projects\HOTWHEELS</span> folder (if not yet there). To build the HotWheels project container stack run next command:
+                <pre class="code-block"><code>docker compose --env-file .env.docker build</code></pre> </li>
+                <li>Spin the container stack by running the next command in the terminal: </li>
+                <pre class="code-block"><code>docker compose --env-file .env.docker up</code></pre>Wait for all the images to be downloaded.</li>
+                <li>Delete /mysql_data folder</li>
+                <li>Reconfigure the Ethernet connection with the next settings (refer to PC Setup Guide in Software Architecture docs):
+                    <pre class="code-block">IP address: 192.168.1.2
+Subnet mask: 255.255.255.0
+Default gateway: 192.168.1.1</code></pre>
+                </li>
+                <li>Repeat step 16.</li> 
+                <li>Congrats, the HotWheels project is up and running! </li> 
+                <li>To run the project after reboot, open the terminal as admin and type next commands:
+                    <pre class="code-block">cd C:\Projects\HOTWHEELS
+docker compose --env-file .env.docker up</code></pre>
+                </li>
+                <li>Access the server via browser at address 192.168.1.2:3101/HW</li>
+
+            </ol>
+
+            <div class="section">
+            <h2>Enabling Kiosk on start</h2>
+            <ol>
+                <li>Press <span class="code-inline">Win + R</span>, run <span class="code-inline">shell:startup</span>.</li>
+                <li>Copy <span class="code-inline">start-kiosk.bat</span> from the <span class="code-inline">windows-install</span> folder into the Startup folder.</li>
+            </ol>
+        </div>
+
+            <div class="section">
+            <h2>Troubleshooting</h2>
+            <ul>
+                <li><strong>npm ci fails during build</strong> - ensure package-lock.json is present in the repository (remove it from .gitignore if necessary). Docker copies the lock file into the image so dependencies install deterministically.</li>
+                <li><strong>Entrypoint reports no such file</strong> - Windows converts shell scripts to CRLF. Reconvert with <span class="code-inline">tr -d '\r' &lt; scripts/docker-entrypoint.sh &gt; scripts/docker-entrypoint.tmp &amp;&amp; mv scripts/docker-entrypoint.tmp scripts/docker-entrypoint.sh &amp;&amp; chmod +x scripts/docker-entrypoint.sh</span>, or disable Git CRLF conversion (<span class="code-inline">git config core.autocrlf false</span>) before rebuilding.</li>
+                <li><strong>MySQL container stuck "unhealthy"</strong> - adjust the healthcheck to use <span class="code-inline">mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD</span>. If HOST is not allowed appears, reset the DB volume (<span class="code-inline">docker compose down -v</span>) so the seed script re-creates grants, or grant <span class="code-inline">'hotwheels'@'%'</span> manually.</li>
+                <li><strong>Can't run the project after turning PC on, "Can't connect to mysql"</strong> - Start Docker Desktop manually until you see "Engine running"</li>
+                <li><strong>daemon connection problem</strong> - </code>in .env.docker change the environment variable <span class="code-inline">HW_SERVER_IP_HOST=192.168.1.2</span> </li>
+            </ul>
+        </div>
+            <div class="note">Follow each step in order for a clean install on the OptiPlex.</div>
+
+        </div>
+
+        <div class="footer">
+            For support questions, email info@rays.nl.
+        </div>
+    </div>
+</body>
+</html>

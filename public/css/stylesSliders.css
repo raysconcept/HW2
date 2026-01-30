@@ -1,0 +1,84 @@
+.slidecontainer {
+    width: 100%; /* Width of the outside container */
+    background-color: indigo;
+    
+  }
+  
+  /* The slider itself */
+  .slider {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%; /* Full-width */
+    height: 100px; /* Specified height */
+    background: #000000; /* Grey background */
+    outline: none; /* Remove outline */
+   
+    -webkit-transition: .02s; /* 0.2 seconds transition on hover */
+    transition: opacity .02s;
+    content:"xxxx";
+  }
+
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 150px; /* Set a specific slider handle width */
+    height: 50px; /* Slider handle height */
+    background: #4CAF50; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    content:"xxxx";
+   
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 25px; /* Set a specific slider handle width */
+    height: 50px; /* Slider handle height */
+    background: #4CAF50; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    
+  }
+
+
+
+.sliderBright::-webkit-slider-thumb {
+    background: #656565ce;     border-radius: 50px; height: 80%;
+  }
+  
+  .sliderBright::-moz-range-thumb {
+    background: #656565ce; border-radius: 50px; height: 80%;
+  }
+
+
+.sliderR::-webkit-slider-thumb {
+    background: #f80000;     border-radius: 50px; height: 80%;
+  }
+  
+  .sliderR::-moz-range-thumb {
+    background: #f80000; border-radius: 50px; height: 80%;
+  }
+  
+  .sliderG::-webkit-slider-thumb {
+    background: #36f800; border-radius: 50px; height: 80%;
+  }
+  
+  .sliderG::-moz-range-thumb {
+    background: #00f815; border-radius: 50px;height: 80%;
+  }
+
+  .sliderB::-webkit-slider-thumb {
+    background: #1500f8; border-radius: 50px; height: 80%;
+  }
+  
+  .sliderB::-moz-range-thumb {
+    background: #3a00f8; border-radius: 50px; height: 80%;
+  }
+
+  .sliderS::-webkit-slider-thumb {
+    background: #656565ce; border-radius: 50px; height: 80%;
+  }
+  .sliderS::-moz-range-thumb {
+    background: #656565ce; border-radius: 50px; height: 80%;
+  }
+
+ 

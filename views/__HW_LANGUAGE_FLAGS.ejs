@@ -1,0 +1,89 @@
+<div id="DIV_FLAG" class="ui_flags">
+    <div id="DIV_UI_SELECT_LANGUAGE"></div>
+    <div onclick="setLang('ENG')" class="ui_flag">
+        <img src="flag/ENG.png" style="width:100%; ">
+    </div>
+    <div onclick="setLang('ESP')" class="ui_flag">
+        <img src="flag/ESP.png" style="width:100%;">
+    </div>
+    <!-- <div onclick="setLang('GER')" class="ui_flag">
+        <img src="flag/GER.png" style="width:100%;">
+    </div> -->
+    <!-- <div onclick="setLang('FRA')" class="ui_flag">
+        <img src="flag/FRA.png" style="width:100%;">
+    </div> -->
+    <div onclick="setLang('ARB')" class="ui_flag">
+        <img src="flag/KSA.png" style="width:100%;">
+    </div>
+</div>
+
+<script>
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // CHOOSE LANGUAGE
+    
+    UI_LANG = {};
+    setLang("ENG");
+    function setLang(LANG) {
+        
+        let clientLanguage = {
+            lang: LANG
+        }
+
+        fetch('/CLIENT_GET_LANGUAGE', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(clientLanguage)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('POST request sent successfully');
+
+                    response.json().then(data => {
+                        console.log('server sends language pack:' + JSON.stringify(data));
+                        
+                        UI_LANG = data;
+                        if (document.getElementById("DIV_UI_INSTRUCTION")) { document.getElementById("DIV_UI_INSTRUCTION").innerHTML = data.UI_WELCOME; }
+                       
+                        //if (document.getElementById("DIV_UI_SELECT_LANGUAGE")) { document.getElementById("DIV_UI_SELECT_LANGUAGE").innerHTML = data.UI_SELECT_LANGUAGE; }
+                        if (document.getElementById("DIV_UI_WELCOME")) { document.getElementById("DIV_UI_WELCOME").innerHTML = data.UI_WELCOME; }
+                        if (document.getElementById("DIV_UI_ENTER_YOUR_NAME_INPUT")) {
+                            document.getElementById("DIV_UI_ENTER_YOUR_NAME_INPUT").placeholder = data.UI_ENTER_YOUR_NAME;
+                        }
+                        if (document.getElementById("DIV_UI_ENTER_YOUR_NAME")) {
+                            document.getElementById("DIV_UI_ENTER_YOUR_NAME").innerHTML = data.UI_ENTER_YOUR_NAME;
+                        }
+                        if (document.getElementById("DIV_UI_ENTER_YOUR_EMAIL")) {
+                            document.getElementById("DIV_UI_ENTER_YOUR_EMAIL").innerHTML = data.UI_ENTER_YOUR_EMAIL;
+                        }
+                        if (document.getElementById("DIV_UI_ENTER_YOUR_EMAIL_INPUT")) {
+                            document.getElementById("DIV_UI_ENTER_YOUR_EMAIL_INPUT").placeholder = data.UI_ENTER_YOUR_EMAIL;
+                        }
+                        if (document.getElementById("DIV_UI_SUBMIT")) { document.getElementById("DIV_UI_SUBMIT").value = data.UI_GO_NEXT; }
+
+                        if (document.getElementById("DIV_UI_360_ADD_CAR")) { document.getElementById("DIV_UI_360_ADD_CAR").innerHTML = data.UI_ADD_CAR;}
+                        if (document.getElementById("DIV_UI_YOUR_CARS")) { document.getElementById("DIV_UI_YOUR_CARS").innerHTML = data.UI_YOUR_CARS; }
+                        if (document.getElementById("DIV_UI_GO_NEXT")) { document.getElementById("DIV_UI_GO_NEXT").innerHTML = data.UI_GO_NEXT; }
+                        if (document.getElementById("DIV_UI_GO_BACK")) { document.getElementById("DIV_UI_GO_BACK").innerHTML = data.UI_GO_BACK; }
+
+                        if (document.getElementById("DIV_UI_PLACE_ORDER")) { document.getElementById("DIV_UI_PLACE_ORDER").innerHTML = data.UI_PLACE_ORDER; }
+                        if (document.getElementById("DIV_UI_ROBOT_IS_PICKING")) { document.getElementById("DIV_UI_ROBOT_IS_PICKING").innerHTML = data.UI_ROBOT_IS_PICKING; }
+
+
+                        if (document.getElementById("DIV_UI_SELECT_YOUR_CARS")) { document.getElementById("DIV_UI_SELECT_YOUR_CARS").innerHTML = data.UI_SELECT_YOUR_CARS; }
+                        if (document.getElementById("DIV_UI_SELECT_YOUR_TEAM")) { document.getElementById("DIV_UI_SELECT_YOUR_TEAM").innerHTML = data.UI_SELECT_YOUR_TEAM; }
+                        if (document.getElementById("DIV_UI_WATCH_THE_CUELINE")) { document.getElementById("DIV_UI_WATCH_THE_CUELINE").innerHTML = data.UI_WATCH_THE_CUELINE; }
+
+                        if (document.getElementById("DIV_UI_ARE_YOU_SURE")) { document.getElementById("DIV_UI_ARE_YOU_SURE").innerHTML = data.UI_ARE_YOU_SURE; }
+                        if (document.getElementById("DIV_UI_YOUR_RACE_BEGINS")) { document.getElementById("DIV_UI_YOUR_RACE_BEGINS").innerHTML = data.UI_YOUR_RACE_BEGINS; }
+                        if (document.getElementById("DIV_UI_YOUR_RACE_HAS_FINISHED")) { document.getElementById("DIV_UI_YOUR_RACE_HAS_FINISHED").innerHTML = data.UI_YOUR_RACE_HAS_FINISHED; }
+                    });
+                } else {
+                    console.error('Failed to send POST request');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+</script>

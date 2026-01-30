@@ -1,0 +1,59 @@
+<!-- CLIENT_FORM.ejs START -->
+<form id="HW_INPUTFORM" class=ui_clientForm action="/submit-form" method="post">
+  <div id="DIV_UI_ENTER_YOUR_NAME" class="ui_formfield_label"></div>
+  <input id="DIV_UI_ENTER_YOUR_NAME_INPUT" type="text" id="name" name="name" class="ui_formfield_input"
+    placeholder="NAME"><br><br>
+
+  <div id="DIV_UI_ENTER_YOUR_EMAIL" class="ui_formfield_label"></div>
+
+  <input id="DIV_UI_ENTER_YOUR_EMAIL_INPUT" type="email" id="email" name="email" class="ui_formfield_input"
+    placeholder="EMAIL"><br><br>
+
+  <input id="DIV_UI_SUBMIT" type="submit" value="->" class="ui_formfield_submit">
+  <div id="div_warning_name"></div>
+  <div id="div_warning_email"></div>
+</form>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById('HW_INPUTFORM').addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent the form from submitting
+
+      let userNameEntered = false;
+      let userEmailEntered = false;
+
+      // Get the values of the name and email fields
+      userName = document.getElementById('DIV_UI_ENTER_YOUR_NAME_INPUT').value;
+      userEmail = document.getElementById('DIV_UI_ENTER_YOUR_EMAIL_INPUT').value;
+
+      console.log('Name:', userName);
+      console.log('Email:', userEmail);
+      console.log('QR:', QRSCANNED);
+
+      // reset warning
+      document.getElementById('div_warning_name').innerHTML ="";
+      document.getElementById('div_warning_email').innerHTML ="";
+
+      // CHECK INPUT
+      const nameRegex = /^[a-zA-Z\s]{3,}$/;
+      if (!nameRegex.test(userName)) {
+        document.getElementById('div_warning_name').innerHTML ="Please enter a valid name <br> At least 3 letters, no numbers or special characters)";
+      } else { userNameEntered = true;  }      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userEmail)) {         
+        document.getElementById('div_warning_email').innerHTML ="Please enter a valid email address";
+      } else { userEmailEntered = true;  }
+
+
+      // INPUT IS CORRECT, CONTINUE
+      if (userNameEntered && userEmailEntered) {       
+        goto_ClientFormCompleted();
+      }
+
+    });
+  });
+</script>
+
+<!-- CLIENT_FORM.ejs END -->

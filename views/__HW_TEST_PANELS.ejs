@@ -1,0 +1,105 @@
+
+<!-- THIS CODE WAS IN SIO.ejs. WHAT IS IT FOR? TESTING WHAT? -->
+
+<div class="test-panel">
+   <div class="test-panel__header">
+      <span class="test-panel__title">Test Suites</span>
+      <span id="S2_TIMESTAMP" class="test-panel__timestamp">--:--:--</span>
+   </div>
+
+   <div class="test-suite">
+      <div class="test-suite__name">Runtime diagnostics</div>
+      <ul class="test-list">
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Application status</span>
+               <code id="S2_MESSAGE" class="test-item__output">Awaiting output…</code>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Socket connection</span>
+               <code id="S2_CONNECTION" class="test-item__output">Awaiting output…</code>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Server connectivity</span>
+               <div id="DIV_CHECKCONNECTION" class="test-item__block">No checks executed yet.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Database connectivity</span>
+               <div id="DIV_CHECKDATASECONNECTION" class="test-item__block">No checks executed yet.
+               </div>
+            </div>
+         </li>
+      </ul>
+   </div>
+
+   <div class="test-suite">
+      <div class="test-suite__name">Manual command results</div>
+      <ul class="test-list">
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Terminal update</span>
+               <div id="DIV_TERMINALSUPDATE" class="test-item__block">No terminal updates yet.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Log download</span>
+               <div id="DIV_GETLOGFILE" class="test-item__block">No log requests yet.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">RFID activity</span>
+               <div id="rfid" class="test-item__block">No scans detected.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Video server update</span>
+               <div id="DIV_VIDEOSERVERUPDATE" class="test-item__block">No updates triggered.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Video asset refresh</span>
+               <div id="DIV_VIDEO_UPDATE" class="test-item__block">No updates triggered.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">LED update</span>
+               <div id="DIV_LEDSUPDATE" class="test-item__block">No updates triggered.</div>
+            </div>
+         </li>
+         <li class="test-item">
+            <span class="test-item__indicator pending" aria-hidden="true"></span>
+            <div class="test-item__content">
+               <span class="test-item__label">Log output</span>
+               <div id="DIV_LOGFILE" class="test-item__block">No output captured.</div>
+            </div>
+         </li>
+      </ul>
+   </div>
+</div>
+
+
+
+</div>
+
+<!-- __HW_TEST_PANELS.ejs END -->

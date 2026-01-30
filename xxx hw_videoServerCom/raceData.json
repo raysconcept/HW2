@@ -1,0 +1,49 @@
+{
+    "username": "John Doe",
+    "email": "JohnDoe@hotmail.com",
+    "HWQR": "HWQR1718614982033",
+    /* maak video: HWQR1718614982033.mp4*/
+    "startTime": "2022-10-06T13:03:17.698Z",
+    "endTime": "2022-10-06T13:03:57.698Z",
+    "raceTimeInSeconds": 0,
+    
+    "cars": [
+        {
+            "carName": "Batman Forever Batmobile",
+            "carAssets": "HKG38",
+            /* deze ref gebruiken om plaatje op te halen van auto
+        HKG38\images\Photo20.png (getal kan wijzigen) */
+            "averageSpeed": "",
+            "raceTimeInSeconds": 0,
+            "positionEnded": 0
+        },
+        {
+            "carName": "Batman Forever Batmobile",
+            "carAssets": "HKG38",
+            "averageSpeed": "",
+            "raceTimeInSeconds": 0,
+            "positionEnded": 0
+        },
+        {
+            "carName": "Batman Forever Batmobile",
+            "carAssets": "HKG38",
+            "averageSpeed": "",
+            "raceTimeInSeconds": 0,
+            "positionEnded": 0
+        },
+        {
+            "carName": "Batman Forever Batmobile",
+            "carAssets": "HKG38",
+            "averageSpeed": "",
+            "raceTimeInSeconds": 0,
+            "positionEnded": 0
+        },
+        {
+            "carName": "Batman Forever Batmobile",
+            "carAssets": "HKG38",
+            "averageSpeed": "",
+            "raceTimeInSeconds": 0,
+            "positionEnded": 0
+        }
+    ]
+}

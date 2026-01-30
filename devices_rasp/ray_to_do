@@ -1,0 +1,15 @@
+router
+2 x pi
+
+guide: see googledoc: maxcams => Dual Pi testing page (HW_DUAL_PI)
+start hotwheels server, go to page DUAL_PI_RECORDING
+
+if ping not work:
+go file: testing script & actual code to be send to PI
+it should work on HW_SERVER_IP= 192.168.1.2
+
+if change ip adress on pi:
+ssh user@192.128.1.38 (eg.)
+password: user
+restart the service
+camera_handlers

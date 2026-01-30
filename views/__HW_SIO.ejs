@@ -1,0 +1,766 @@
+<head>
+   <link rel="stylesheet" href="css/stylesHW.css">
+   <script src="socket.io-3.0.1.min.js"></script>
+</head>
+
+
+
+
+<div onclick="toggleClass('it_popup')" class="it_btn">IT</div>
+
+
+
+<div id="DIV_SYSTEM_MODE" class="system_mode_indicator">SYSTEM MODE</div>
+<div id="DIV_ROBOT_HALTED" class="system_mode_robot_halted" onclick="window.open('/HW_ROBOT', '_blank')">ROBOT WAS
+   HALTED. GO TO ROBOT PAGE TO UNHALT</div>
+
+<div id="S2POPUP" class="it_popup">
+
+
+   <button class=it_btn onclick="hideDIV('S2POPUP')" class="del">x</button>
+   <div id="S2_TIMESTAMP">S2_TIMESTAMP</div>
+   <h1>hotwheels vending system</h1>
+   <h3>copyright @ 2022-2025 RAYSConceptDevelopmentBV</h3>
+   <h3>for issues & support visit: http://www.rays.nl/SUPPORT/SUPPORT_HW</h3>
+   <h3>or mail to: info@rays.nl</h3>
+   <h9>you are here:<%- PATH %> IP:<%- GLOBALS.S1_IPADRESS %>:<%- GLOBALS.S1_PORT %></h9>
+
+
+
+   <!--
+      <ul><button onclick="window.open('/HW', '_blank')" class="it_btn">
+            GO TO OPERATION LINKSPAGE</button></ul>
+
+      <form method="POST" action="/HW_OPERATOR_REQUEST" class="" autocomplete="off">
+         <ul><button type="submit" value="RFO_VIDEOSERVERUPDATE" name="cmnd" class="it_btn"
+               onclick="submitVideoServerUpdate()">
+               VIDEOSERVERUPDATE</button></ul>
+         <ul><button type="submit" value="RFO_LEDSUPDATE" name="cmnd" class="it_btn" onclick="submitLedsUpdate()">
+               LEDSUPDATE</button></ul>
+         <ul><button type="submit" value="RFO_GETLOGFILE" name="cmnd" class="it_btn" onclick="submitGetLOGFILE()">
+               GET LOGFILE</button></ul>
+         <ul><button type="submit" value="RFO_TERMINALSUPDATE" name="cmnd" class="it_btn"
+               onclick="submitTerminalsUpdate()">
+               GET TERMINALSUPDATE</button></ul>
+         <ul><button type="submit" value="RFO_CHECKCONNECTION" name="cmnd" class="it_btn"
+               onclick="submitCheckConnection()">TEST
+               S1HWCOM CONNECTION</button></ul>
+         <ul><button type="submit" value="RFO_CHECKDATABASECONNECTION" name="cmnd" class="it_btn"
+               onclick="submitCheckDatabaseConnection()">TEST HW_DATABASE CONNECTION</button>
+         </ul>
+         <ul><button type="submit" value="" name="cmnd" class="it_btn" onclick="HW_DB_DEV_RACETIMES_POPULATE()">Call to
+               HW_DB_DEV_RACETIMES_POPULATE</button>
+         </ul>
+      </form>
+      -->
+</div>
+
+<script>
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // CREATE S2 CONNECTION // S1_IPADRESS + S1_PORT worden meegestuurd vanuit S1_HW_DATABASE
+
+   const S1_IPADRESS = '<%= GLOBALS.S1_IPADRESS %>';
+   const S1_PORT = '<%= GLOBALS.S1_PORT %>';
+   const sameHost = S1_IPADRESS === '0.0.0.0'
+      || S1_IPADRESS === '127.0.0.1'
+      || S1_IPADRESS === 'localhost'
+      || S1_IPADRESS === window.location.hostname;
+   const socketEndpoint = sameHost
+      ? undefined
+      : `${window.location.protocol}//${window.location.hostname}:${S1_PORT}`;
+   const S2 = socketEndpoint ? io(socketEndpoint) : io();  // Prefer same-origin socket
+   const maxCarsPerOrder = '<%= GLOBALS.maxCarsPerOrder %>';
+
+
+   function updateSystemMode() {
+      if (GLOBALS && GLOBALS.SYSTEMMODE === 'SYSTEM_DEVMODE') {
+         showDIV("DIV_SYSTEM_MODE");
+      }
+      if (GLOBALS && GLOBALS.SYSTEMMODE === 'SYSTEM_RETAILMODE') {
+         // hide the alert in normal operation
+         hideDIV("DIV_SYSTEM_MODE");
+      }
+   }
+   function showCassette(casNr) {
+      alert("showCassette:" + casNr);
+   }
+   function toggleClass(classIn) {
+      var elements = document.getElementsByClassName(classIn);
+      for (var i = 0; i < elements.length; i++) {
+         if (elements[i].classList.contains(classIn)) {
+            if (elements[i].style.display == 'none') {
+               elements[i].style.display = 'block'
+            }
+            else { elements[i].style.display = 'none' }
+         }
+      }
+   }
+   function toggleDIV(DIV) { alert("function toggleDIV() not defined yet in S2.ejs"); }
+
+   function showDIV(DIV) { //alert("showDIV"+DIV);
+      document.getElementById(DIV).style.display = "block";
+      //document.getElementById(DIV).style.height="50%";
+
+   }
+   function hideDIV(DIV) { //alert("hideDIV:"+DIV);
+      document.getElementById(DIV).style.display = "none";
+      //document.getElementById(DIV).style.height="0%";
+
+   }
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // GENERAL FUNCTIONS
+   function printDiv(x) {
+      var divContents = document.getElementById(x).innerHTML;
+      var a = window.open('', '', 'height=500, width=500');
+      var date = new Date().toDateString();
+      a.document.write('<html>');
+      a.document.write('<head>');
+      a.document.write('<link rel="stylesheet" href="css/stylesHW.css">');
+      // Ensure absolute asset resolution inside print window
+      a.document.write('<base href="' + window.location.origin + '">');
+      a.document.write('</head>');
+      a.document.write('<body> <div class=head></div>');
+      a.document.write('<div class=btn style=\"text-align:right; right:0px;\">');
+      a.document.write(date);
+      a.document.write('</div>');
+      a.document.write(divContents);
+      a.document.write('</body></html>');
+      a.document.close();
+      a.print();
+   }
+
+   function printQR(div) {
+      alert(div);
+      // send the QR list back, to be flagged as printed
+      let e = "FROM___QR_PRINT_LIST___x";
+      S2.emit("MFO", e);
+
+      var divContents = document.getElementById(div).innerHTML;
+      var a = window.open('', '', 'height=500, width=500');
+      var date = new Date().toDateString();
+      a.document.write('<html>');
+      a.document.write('<head>');
+      a.document.write('<link rel="stylesheet" href="css/stylesHW.css">');
+      // Ensure absolute asset resolution inside print window
+      a.document.write('<base href="' + window.location.origin + '">');
+      a.document.write('</head>');
+      a.document.write('<body> <div class=head></div>');
+      a.document.write('<div class=btn style=\"text-align:right; right:0px;\">');
+      a.document.write(date);
+      a.document.write('</div>');
+      a.document.write(divContents);
+      a.document.write('</body></html>');
+      a.document.close();
+      a.print();
+   }
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // SHOW CURRENT TIME
+   let updateTimeStamp = setInterval(currentTime, 1000);
+   let updatedTime;
+
+   function currentTime() {
+      // console.log("running updateTimeStamp");
+      updatedTime = "[" + new Date().toLocaleTimeString() + "]";
+      document.getElementById("S2_TIMESTAMP").innerHTML = updatedTime;
+   }
+
+
+
+
+
+   console.log("==== ||||||||||||||||||| S2.ejs S2 ESTABLISHED:" + S2);
+
+   let TERMINAL_URL = window.location.href;
+   S2.on('connect_error', (err) => {
+      console.error("Socket connection error:", err.message, "endpoint:", socketEndpoint || "same-origin");
+   });
+
+   /*
+   function updateBanner(mode) {
+      const banner = document.querySelector('.system-mode-banner');
+      if (!banner) return;
+ 
+      banner.classList.remove('dev', 'normal');
+ 
+      if (mode === 'SYSTEM_DEVMODE') {
+         banner.classList.add('dev');
+         banner.textContent = 'Developer database active';
+      } else if (mode === 'SYSTEM_RETAILMODE') {
+         banner.classList.add('normal');
+         banner.textContent = 'CAUTION: Retail database active';
+      } else {
+         banner.textContent = '';
+      }
+   }
+      */
+
+   // PROCES S2 CONNECTION
+   S2.on("connect", function () {
+      console.log("========================================");
+      console.log("                  _S2.ejs  S2.on connect on TERMINAL_URL:" + TERMINAL_URL);
+      console.log("========================================");
+
+      let message = TERMINAL_URL + "___CONNECT___" + "MFC-socket io connected TERMINAL_URL:" + TERMINAL_URL + " at PORT:" + S2.S1_PORT + " id:" + S2.id;//+"S2_ID"+ S2_ID;
+      S2.emit("MFC", message);
+      // note: there are 2 types of connection: 
+      // MFC: TerminalSocket (Socket.id), MFD: Device (MacAddress = android device)
+   })
+
+   S2.on("ROBOT_HALTED", function (e) {
+      showDIV("DIV_ROBOT_UNHALT");
+      hideDIV("DIV_ROBOT_STOP");
+   });
+   S2.on("ROBOT_UNHALTED", function (e) {
+      hideDIV("DIV_ROBOT_UNHALT");
+      showDIV("DIV_ROBOT_STOP");
+   });
+
+   S2.on("SYSTEM_DEVMODE", function (e) {
+      showDIV("DIV_SYSTEM_MODE");
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML = "SYSTEM IS IN SIMULATION MODE<br>";
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>This mode is for testing only.";
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>The system is running on the developer database.";
+
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>Changes made to the database (operations like vending, or changes made in ORDERS and INVENTORY), will NOT affect the actual retail database.";
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>if there is a cueline in de developer database, the robot will pick from that.";
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>Make sure you put cars back into the machine as they were, after testing!<br>";
+
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += "<br>You can end testing by switching back to retail database.<br>";
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML += '<br><div class="btn" onclick="DatabaseSwitchToRetail()">SWITCH TO RETAIL DATABASE<br>';
+   });
+
+   function DatabaseSwitchToRetail() {
+      let c = confirm("switch to regular database? switches to active database. Any changes will effect the actual client-database. Note that the robot will resume picking from the cueLine also!");
+      if (c == true) { alert("here we go"); } else { alert("canceled"); }
+
+      fetch('/DB_SWITCH_TO_RETAILMODE', {
+         method: 'POST',
+         headers: {
+            'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({})
+      })
+         .then(res => res.json())
+         .then(data => {
+            if (data.success) {
+               alert("Switched to normal DB");
+               location.reload();
+            }
+         });
+   }
+
+   S2.on("SYSTEM_RETAILMODE", function (e) {
+      document.getElementById("DIV_SYSTEM_MODE").innerHTML = "SYSTEM IS IN RETAIL MODE";
+      hideDIV("DIV_SYSTEM_MODE");
+   });
+
+   S2.on("ESPUPDATE", function (e) {
+
+      console.log("========================================");
+      console.log("       _S2.ejs  S2.on ESPUPDATE @ CLIENT");
+      console.log("========================================");
+
+      if (document.getElementById("LISTESP_TIMEUPDATED")) {
+         document.getElementById("LISTESP_TIMEUPDATED").innerHTML = "<div class=wide>UPDATED:" + Date() + "</div>";
+      }
+      if (document.getElementById("LISTESP")) {
+         document.getElementById("LISTESP").innerHTML = "";
+      }
+      if (document.getElementById("LISTESP")) {
+         document.getElementById("LISTESP").innerHTML +=
+            "<form method=\"post\" action=\"/ESPPROBEONE\" >" +//autocomplete=\"off\"
+            "<div class=wide>" +
+            "<button class=listItem>action</button>" +
+            "<button class=listItem>mac</button>" +
+            "<button class=listItem>status</button>" +
+            "<button class=listItem>since</button>" +
+            "</div>" +
+            "</form>";
+      }
+      for (let x = 0; x < e.list.length; x++) {
+         console.log("_S2.ejs => mac:" + e.list[x].mac + "status:" + e.list[x].status);
+         if (document.getElementById("LISTESP")) {
+            document.getElementById("LISTESP").innerHTML +=
+               // form wordt gestuurd naar S1_comESP =>  S1_APP.post("/ESPADMIN"...
+               "<form method=\"post\" action=\"/ESPPROBEONE\" >" +//autocomplete=\"off\"
+               "<div class=wide>" +
+               "<button class=listItem name=\"mac\" value=\"" + e.list[x].mac + "\">PROBE</button>" +
+               "<button class=listItem>" + e.list[x].mac + "</button>" +
+               "<button class=listItem>" + e.list[x].status + "</button>" +
+               "<button class=listItem>" + e.list[x].time + "</button>" +
+               "</div>" +
+               "</form>";
+         }
+      }
+      S2.emit("ESPUPDATE_RESPONSE", { message: "Request processed successfully" });
+   })
+
+   S2.on("SERIAL_IN", function (e) {
+
+      // message from device
+      console.log("=============================================================");
+      console.log("                                               SIO on SERIAL");
+      console.log("=============================================================");
+
+      const serialParts = e.split("___");
+      const from = serialParts[0] || "";
+      const action = serialParts[1] || "";
+      const message = serialParts[2] || "";
+      console.log("--> from:" + from);
+      console.log("--> action:" + action);
+      console.log("--> message:" + message);
+
+      if (message === "ESPBONUS_RESPONDING") { alert("SERIAL_IN" + message); }
+
+      // document.getElementById("DIV_SERIALUPDATE").innerHTML = "[" + new Date().toLocaleTimeString() + "]" + from + action + message;
+   });
+
+
+   S2.on("TESTING", function (e) {
+      alert("SIO on TESTING");
+      // message from device
+      console.log("=============================================================");
+      console.log("                                               SIO on TESTING");
+      console.log("=============================================================");
+      // from = e.split("___")[0]; console.log("--> from:" + terminal);
+      // action = e.split("___")[1]; console.log("--> action:" + action);
+      // message = e.split("___")[2]; console.log("-->message:" + message);
+
+      /*
+            document.getElementById("DIV_ROBOT_COMMAND_SEND").innerHTML += "<br>ROBOTEJS S2 on MFS" + action;
+            switch (action) {
+               case "ROBOTCOMMANDSEND":
+                  alert("ROBOTEJS ROBOTCOMMANDSEND on MFS" + action);
+                  document.getElementById("DIV_ROBOT_COMMAND_SEND").innerHTML += "robotcommand:" + message;
+                  break;
+            }
+                  */
+   });
+   S2.on("MFS_JSON", (data) => {
+      let action = data.action;
+      switch (action) {
+         case "SIO_LIST_ORDERS":
+            //let orders = data.message;
+            SHOW_ORDER_LIST(data.message);
+            break;
+         case "SIO_LIST_ORDERS_INTERRUPTED":
+            //let orders = data.message;
+            SHOW_ORDER_LIST_INTERRUPTED(data.message);
+            break;
+         case "SIO_LIST_POPULAR_CARS":
+            //let orders = data.message;
+            SHOW_ORDER_LIST_POPULAR_CARS(data.message);
+            break;
+
+      }
+   });
+
+   S2.on("MFS", function (e) {
+      // console.log("========================================");
+      // console.log("SIO.ejs => S2 MFS @ CLIENT");
+      // console.log("========================================");
+
+      const parts = e.split("___");
+      const terminal = parts[0] || "";
+      const action = parts[1] || "";
+      const message = parts.slice(2).join("___") || "";
+      // console.log("==> incomming @S2: MFS terminal    :" + terminal);
+      // console.log("==> incomming @S2: MFS action      :" + action);
+      // console.log("==> incomming @S2: MFS message     :" + message);
+      // ----------------------------------------------------------------------------------
+      //                                                         INCOMMING FROM SERVER
+      // ----------------------------------------------------------------------------------
+
+      currentTime();
+      switch (action) {
+
+         case "ROBOT_STARTS_PICKING":
+
+            break;
+
+         case "SYSTEMMODE":
+
+            break;
+
+         case "ROBOTCOMMANDSEND":
+            console.log("_S2.ejs => S2.on(MFS) case: ROBOTCOMMANDSEND on MFS" + action);
+            document.getElementById("DIV_ROBOT_COMMAND_SEND").innerHTML += "robotcommand:" + message;
+            break;
+
+         case "SIO_SHOW_OPERATOR_QRTAG":
+            // alert("tag___("+message+")");
+            console.log("_S2.ejs => S2.on(MFS) case: SIO_SHOW_OPERATOR_QRTAG");
+            //document.getElementById("DIV_OPERATOR_QR").innerHTML = message;
+            break;
+
+         case "SIO_LIST_QR":
+            console.log("_S2.ejs => S2.on(MFS) case: SIO_LIST_QR");
+            document.getElementById("DIV_LIST_QR").innerHTML = message;//updatedTime +
+            break;
+
+         case "SIO_LISTINVENTORY":
+            console.log("_S2.ejs => S2.on(MFS) case: SIO_LISTINVENTORY");
+            document.getElementById("DIV_LIST_INVENTORY").innerHTML = updatedTime + message;
+            break;
+
+         case "SIO_LIST_LEADERBOARD":
+            // message generated in HW_BROADCASTING           
+            if (document.getElementById("DIV_LIST_LEADERBOARD")) { document.getElementById("DIV_LIST_LEADERBOARD").innerHTML = updatedTime + message; }
+            break;
+
+         case "SIO_LIST_CUELINE":
+            // message generated in HW_BROADCASTING           
+            if (document.getElementById("DIV_CUELINE")) { document.getElementById("DIV_CUELINE").innerHTML = updatedTime + message; }
+            break;
+
+         case "SIO_CUELINE_PICKING":
+            // message generated in HW_BROADCASTING         
+            if (document.getElementById("DIV_CUELINE_PICKING")) { document.getElementById("DIV_CUELINE_PICKING").innerHTML = message; }
+            break;
+
+            /*
+         case "SIO_LIST_ORDERS":
+            try {
+               // Convert to array if needed (for Socket.IO sometimes sending objects)
+               const ORDERS = message.split(",");
+               alert(message);
+               alert(ORDERS.length());
+               //document.getElementById("DIV_LIST_ORDERS").innerHTML = "===<br>" + message + "<br>===";
+               let listHTML = "HALLO";
+               ORDERS.forEach(ORDER => {
+                  console.log(ORDER.orderQr);
+                  if (ORDER?.orderQR) { // Optional chaining
+                     listHTML += `<div>'+ORDER?.orderQR+'</div>`;
+                  }
+               });
+ 
+               //document.getElementById("DIV_LIST_ORDERS").innerHTML = listHTML;
+            } catch (error) {
+               console.error("Order processing error:", error);
+            }
+ 
+            break;
+            */
+            // Helper function to prevent XSS
+            function escapeHtml(unsafe) {
+               return unsafe
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/'/g, "&#039;");
+            }
+
+            // Helper functions
+            function convertToArray(data) {
+               if (Array.isArray(data)) return data;
+               if (typeof data === 'object') return [data]; // Wrap single object
+               return []; // Fallback for unexpected formats
+            }
+
+
+         //case "S1HWCOM_LIST_CARS_INVENTORY":
+         //  console.log("_S2.ejs => S2.on(MFS) case: S1HWCOM_LIST_CARS_INVENTORY");
+         //  document.getElementById("DIV_LIST_INVENTORY").innerHTML = updatedTime + message;
+         //  break;
+
+         case "S1HWCOM_VIDEOUPDATE":
+            console.log("_S2.ejs => S2.on(MFS) case: S1HWCOM_VIDEOUPDATE");
+            document.getElementById("DIV_VIDEO_UPDATE").innerHTML += updatedTime + message;
+            break;
+
+
+         case "S1HWDB_ALERT":
+            console.log("_S2.ejs => S2.on(MFS) case: S1HWDB_ALERT");
+            document.getElementById("DIV_MFS_ALERT").innerHTML = updatedTime + message;
+            break;
+
+
+
+         case "S1HWCOM_DBUPDATE":
+            console.log("_S2.ejs => S2.on(MFS) case: S1HWCOM_DBUPDATE");
+            document.getElementById("DIV_DBDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "S1WHCOMCONFIRMCONNECTION":
+            console.log("_S2.ejs => S2.on(MFS) case: S1WHCOMCONFIRMCONNECTION");
+            document.getElementById("S2_CONNECTION").innerHTML = "NOW..." + message;
+            document.getElementById("DIV_CHECKCONNECTION").innerHTML = updatedTime + message;
+            //var messageOut = terminal + "___CONFIRMCONNECTREPLY___MESSAGINGS";           
+            // S2.emit("MFC", messageOut);
+            break;
+
+         case "CONFIRMED_DATABASECONNECTION":
+            //var S1_PORT___" + "FROM:S2EJS-MFC-CONFIRMCONNECT:" + T + " at PORT:" + S1_PORT + " id:" + S2.id;//+"S2_ID"+ S2_ID;
+            console.log("_S2.ejs => MFS: DATABASECONFIRMCONNECT case: CONFIRMED_DATABASECONNECTION ");
+            //document.getElementById("S2_DATABSECONNECTION").innerHTML = message;
+            //currentTime();
+            document.getElementById("DIV_CHECKDATABASECONNECTION").innerHTML = updatedTime + message;
+            //setTimeout(emptyDIVS, 5000);
+            break;
+
+         case "CONFIRMCONNECT":
+            //var S1_PORT___" + "FROM:S2EJS-MFC-CONFIRMCONNECT:" + T + " at PORT:" + S1_PORT + " id:" + S2.id;//+"S2_ID"+ S2_ID;
+            console.log("_S2.ejs => MFS: CONFIRMCONNECT action:" + action);
+            document.getElementById("S2_CONNECTION").innerHTML = updatedTime + message;
+            break;
+
+         case "ROBOTUPDATE":
+            document.getElementById("DIV_ROBOTUPDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "ROBOT_STATUS_UPDATE":
+            try {
+               const status = JSON.parse(message);
+               console.log("Robot status update:", status);
+
+               const connectionEl = document.getElementById("robot_connection_status");
+               if (connectionEl) {
+                  const connected = Boolean(status.isConnected);
+                  connectionEl.textContent = connected ? "Connected" : "Disconnected";
+                  connectionEl.classList.toggle("connected", connected);
+                  connectionEl.classList.toggle("disconnected", !connected);
+               }
+
+               const programEl = document.getElementById("robot_availability_status");
+               if (programEl) {
+                  const running = Boolean(status.isProgramRunning);
+                  programEl.textContent = running ? "Yes" : "No";
+                  programEl.classList.toggle("available", running);
+                  programEl.classList.toggle("unavailable", !running);
+               }
+
+               if (Array.isArray(status.joints)) {
+                  status.joints.slice(0, 6).forEach((joint, index) => {
+                     const jointEl = document.getElementById(`robot_joint_${index + 1}`);
+                     if (jointEl) {
+                        jointEl.textContent = typeof joint === "number" ? joint.toFixed(2) : "-";
+                     }
+                  });
+               }
+
+               if (Array.isArray(status.tcpM)) {
+                  const [x, y, z] = status.tcpM;
+                  const tcpEls = [
+                     { id: "robot_tcp_x", value: x },
+                     { id: "robot_tcp_y", value: y },
+                     { id: "robot_tcp_z", value: z }
+                  ];
+                  tcpEls.forEach(({ id, value }) => {
+                     const el = document.getElementById(id);
+                     if (el) {
+                        el.textContent = typeof value === "number" ? value.toFixed(2) : "-";
+                     }
+                  });
+               }
+
+               if (Array.isArray(status.tcpR)) {
+                  const [rx, ry, rz] = status.tcpR;
+                  const tcpRotEls = [
+                     { id: "robot_tcp_rx", value: rx },
+                     { id: "robot_tcp_ry", value: ry },
+                     { id: "robot_tcp_rz", value: rz }
+                  ];
+                  tcpRotEls.forEach(({ id, value }) => {
+                     const el = document.getElementById(id);
+                     if (el) {
+                        el.textContent = typeof value === "number" ? value.toFixed(2) : "-";
+                     }
+                  });
+               }
+
+               // joints, etc.
+            } catch (error) {
+               console.error("Error parsing robot status:", error);
+            }
+            break;
+
+         case "ROBOTUPDATE_CALIBRATION_UPDATE":
+            document.getElementById("DIV_ROBOT_CALIBRATION_UPDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "TERMINALSUPDATE":
+            console.log("_S2.ejs => S2.on(MFS) case: HELLO received from MFS");
+            document.getElementById("DIV_TERMINALSUPDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "VIDEOSERVERUPDATE":
+            console.log("_S2.ejs => S2.on(MFS) case: HELLO received from MFS");
+            document.getElementById("DIV_VIDEOSERVERUPDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "LEDSUPDATE":
+            console.log("_S2.ejs => S2.on(MFS) case: HELLO received from MFS");
+            document.getElementById("DIV_LEDSUPDATE").innerHTML = updatedTime + message;
+            break;
+
+         case "GETLOGFILE":
+            console.log("_S2.ejs => S2.on(MFS) case: HELLO received from MFS");
+            document.getElementById("DIV_GETLOGFILE").innerHTML = updatedTime + message;
+            break;
+
+         case "QRCREATE":
+            console.log("_S2.ejs => S2.on(MFS) case: HELLO received from MFS");
+            document.getElementById("DIV_QRCREATE").innerHTML = updatedTime + message;
+            break;
+
+         case "RELOAD":
+            console.log("_S2.ejs => ON CLIENT on(MFS) RELOAD ** uitgezet om te testen");
+            break;
+
+         case "CONFIRMSCAN":
+            console.log("_S2.ejs => MFS: CONFIRMSCAN action:" + action);
+            document.getElementById("rfid").innerHTML = "+>" + updatedTime + message;
+            break;
+
+         case "REPLACEHEADERIMAGE":
+            document.getElementById("showImg").innerHTML = "<img src=./img/" + message + ".jpg />";
+            break;
+
+         case "BCMMESSAGE":
+            console.log("_S2.ejs => ON CLIENT on(MFS) BCMMESSAGE" + message);
+            var x = ""; x = window.location.href;//toString(location);//(.href).substring(-2);
+            x = x.slice(-3); // levert laatste 3 characters op van de URL
+            //messag = message.slice(3);
+            document.getElementById("bcm").innerHTML = "xxx:" + message;
+
+            //avatar
+            //var avatar = "logo" + x.slice(-1) + ".jpg";
+            //document.getElementById("headerimg").innerHTML = "<img src=img/" + avatar + " width=100% >";
+            break;
+
+         case "SHOW01":
+            clearIntervals();
+            var e1 = document.getElementById("colorblock1");
+            var e2 = document.getElementById("colorblock2");
+            function colorA1() {
+               e1.style.background = "white"; e2.style.background = "red";
+               setTimeout(colorA2, 500);
+            };
+            function colorA2() { e1.style.background = "red"; e2.style.background = "white"; };
+
+            interval01 = setInterval(colorA1, 1000);
+            break;
+
+         case "SHOW02":
+            clearIntervals();
+
+            var e1 = document.getElementById("colorblock1");
+            var e2 = document.getElementById("colorblock2");
+            function colorB1() {
+               e1.style.background = "black";
+               e2.style.background = "green";
+               setTimeout(colorB2, 500);
+            };
+            function colorB2() { e1.style.background = "green"; e2.style.background = "black"; };
+            interval02 = setInterval(colorB1, 1000);
+            break;
+
+         case "SHOW03":
+            clearIntervals();
+            break;
+
+         case "SHOWCOLOR":
+            var e1 = document.getElementById("colorblock1");
+            e1.style.background = message;
+            break;
+
+         case "RFID":
+            RFID_TAGID = message;
+            console.log("MFS RFID" + PAGE);
+            document.getElementById("rfid").innerHTML = RFID_TAGID;// + " / "+ Date(dateString);
+            if (document.getElementById("rfidScanned")) {
+               document.getElementById("rfidScanned").innerHTML = RFID_TAGID;// + " / "+ Date(dateString);        }
+
+               // findPlayerByRfid(RFID);
+               console.log("_S2.ejs =>  S2onMFS@client  action:" + action + "RFID_TAGID" + RFID_TAGID);
+            };
+            break;
+
+         case "TerminalsUpdate":
+            console.log("_S2.ejs =>  MFS TerminalsUpdate page:" + PAGE);// + PAGE + " / message:"+message);
+            break;
+
+         case "RfidFoundHiPlayer":
+            console.log("_S2.ejs => MFS RfidFoundHiPlayer page:" + PAGE + " / message:" + message);
+            document.getElementById("message").innerHTML = message.name;// + " / "+ Date(dateString);
+            //location.load(message);
+            //window.location.replace(message);
+            break;
+
+         case "RfidNotFound":
+            console.log("_S2.ejs => MFS RfidFoundHiPlayer" + PAGE);
+            document.getElementById("message").innerHTML = message;// + " / "+ Date(dateString);
+            //location.load(message);
+            //window.location.replace(message);
+            break;
+
+         case "RAT":
+            console.log("_S2.ejs => MFS RAT page:" + PAGE);
+            //document.getElementById("test").innerHTML = action + "=>" + message;// + " / "+ Date(dateString);
+            //location.load(message);
+            //window.location.replace(message);
+            if (PAGE != "admin") { window.location.replace(message); }
+            break;
+
+         case "ESPUPDATE":
+            console.log("_S2.ejs => MFS: ESPUPDATE action: " + action + " / message: " + message + " / terminal: " + terminal);
+            console.log("_S2.ejs => MFS: ESPUPDATE message.lengt:" + message.length);
+            console.log(message.mac);
+            for (x = 0; x < message.length; x++) {
+               console.log("mac:" + message[x]);
+               if (document.getElementById("LISTESP")) { document.getElementById("LISTESP").innerHTML = x.mac; }
+            }
+            break;
+      }
+
+   });
+
+   // this is not functional perse, just a method to detect something is not working in de connection with S1HWCOM
+   // if not reply from S1HWCOM, this is visible in updated divs in dashboard
+   // INVENTORY //////////////////////////////////////////////////////////////////////////////////
+   function submitPutCarsInCassettesSerial() {
+      document.getElementById("DIV_LIST_INVENTORY").innerHTML = "putting cars in machine serial";
+   }
+   function submitGetListInventory() {
+      document.getElementById("DIV_LIST_INVENTORY").innerHTML = "waiting for S1HWCOM to get list inventory";
+   }
+   // DB //////////////////////////////////////////////////////////////////////////////////
+   function submitCheckDatabaseConnection() {
+      document.getElementById("DIV_CHECKDATASECONNECTION").innerHTML = "waiting for S1HWCOM to get submitCheckDatabaseConnection";
+   }
+   function submitCheckConnection() {
+      document.getElementById("DIV_CHECKCONNECTION").innerHTML = "waiting for S1HWCOM to get submitCheckConnection";
+   }
+   // HARDWARE //////////////////////////////////////////////////////////////////////////////////
+
+   function submitRobotConnect(S1_APP) {
+      document.getElementById("DIV_ROBOTUPDATE").innerHTML = "waiting for S1HWCOM connect Robot";
+   }
+   function submitRobotUpdate(S1_APP) {
+      document.getElementById("DIV_ROBOTUPDATE").innerHTML = "waiting for S1HWCOM to get submitRobotUpdate";
+   }
+   function submitTerminalsUpdate() {
+      document.getElementById("DIV_TERMINALSUPDATE").innerHTML = "waiting for S1HWCOM to get submitTerminalsUpdate";
+   }
+   function submitVideoServerUpdate() {
+      document.getElementById("DIV_VIDEOSERVERUPDATE").innerHTML = "waiting for S1HWCOM to get submitVideoServerUpdate";
+   }
+   function submitLedsUpdate() {
+      document.getElementById("DIV_LEDSUPDATE").innerHTML = "waiting for S1HWCOM to get submitLedsUpdate";
+   }
+   function submitGetLOGFILE() {//submitGetLOGFILE()
+      document.getElementById("DIV_LOGFILE").innerHTML = "waiting for S1HWCOM to get submitGetLogFile";
+   }
+   // QR //////////////////////////////////////////////////////////////////////////////////
+   function submitQRCreate() {
+      document.getElementById("DIV_QRCREATE").innerHTML = "waiting for S1HWCOM to get QRCreate results";
+   }
+   function submitQRGetValidList() {
+      document.getElementById("DIV_QRCREATE").innerHTML = "waiting for S1HWCOM to get QR get Valid List results";
+   }
+   function submitQRDropAll() {
+      document.getElementById("DIV_QRCREATE").innerHTML = "waiting for S1HWCOM to get QR Drop All";
+   }
+</script>
+<!-- SIO.ejs END -->

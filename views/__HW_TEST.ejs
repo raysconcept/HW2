@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="css/stylesHW.css">
+  <script src="socket.io-3.0.1.min.js"></script>
+</head>
+
+<body>
+ <% NAMEX %> HALLO
+  <div class="red">TEST</div>
+  <div class="btn" onclick="sendMessage()">send</div>
+  <div id="response">response here</div>
+
+  <script>
+    console.log("Initializing socket connection...");
+    const socket = io();
+
+    socket.on('connect', () => {
+      console.log('FRONT END ID: ', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
+    // Receive responses from server
+    socket.on('server_response', (msg) => {
+      console.log("Received server response:", msg);
+      document.getElementById('response').innerHTML += `<p>${msg}</p>`;
+    });
+
+    function sendMessage() {
+      console.log("Sending test message...");
+      socket.emit('test', 'test message');
+    }
+  </script>
+</body>
+
+</html>

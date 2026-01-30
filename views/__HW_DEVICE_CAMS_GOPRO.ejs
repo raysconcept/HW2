@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<div onclick="toggleClass('it_popup')" class="it_open">IT</div> <!-- x -->
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+<title>CAMS</title>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <link rel="stylesheet" href="css/stylesHW.css">
+
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 0;
+            height: 100vh;
+            background-color: #0c90e9;
+        }
+
+        .video-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+            width: 100%;
+            max-width: 2500px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .file-name {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: rgba(0, 0, 0, 0);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 14px;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+
+        .title {
+            color: white;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        .camnr {
+            position: absolute;
+            color: white;
+            z-index: 2;
+        }
+    </style>
+</head>
+
+<h1>CAMS</h1>
+<div class="hwlogo_operator"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+
+<body class="inventory_background">
+    <div class="operator_menu">
+        <div class="operator_header">HOTWHEELS CAMS</div>
+
+        <script>
+            function SIO_CAMS_START_RECORDING() {
+
+                //alert("start recording");
+                console.log("SIO_CAMS_START_RECORDING");
+                //resetDIVS();
+                //showDIV("DIV_LIST_QR");
+                let terminal = "x";;
+                let action = "CAMS_START_RECORDING";
+                let message = "x";
+                let MSG = terminal + "___" + action + "___" + message;
+                S2.emit('MFO', MSG);
+            };
+        </script>
+
+        <button onclick="SIO_CAMS_START_RECORDING();" class="btnWide">START RECORDING</button>
+        <div id="DIV_CAMSTATUS">DIV_CAMSTATUS</div>
+        <div class="operator_header">HOTWHEELS CAMS</div>
+        <img src="hwlogo.png" style="width:200px">
+        <h1 class="title">HOTWHEELS SPEEDCHALLENGE</h1>
+
+        <div class="video-container">
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM1</span>
+                <div id="CAMSTATUS_1">camstatus1</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM2</span>
+                <div id="CAMSTATUS_2">camstatus2</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM3</span>
+                <div id="CAMSTATUS_3">camstatus3</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM4.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM4</span>
+                <div id="CAMSTATUS_4">camstatus4</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM5.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM5</span>
+                <div id="CAMSTATUS_5">camstatus5</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM6.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM6</span>
+                <div id="CAMSTATUS_6">camstatus6</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM7.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM7</span>
+                <div id="CAMSTATUS_7">camstatus7</div>
+
+            </div>
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="raceVideo/CAM8.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <span class="file-name">CAM8</span>
+                <div id="CAMSTATUS_8">camstatus8</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

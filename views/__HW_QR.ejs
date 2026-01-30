@@ -1,0 +1,124 @@
+<html lang="en" dir="ltr">
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>HW QR MANAGER</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <script>
+        const PAGE = "QR";
+        function resetDIVS() {
+            hideDIV("DIV_LIST_QR");
+            hideDIV("DIV_OPERATOR_QR");
+            hideDIV("DIV_OPERATOR_QR_FREEPASS");
+            hideDIV("DIV_OPERATOR_QR_TESTPASS");
+        }
+
+        function SIO_QR_operator() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_TAG";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR");
+            //GLOBALS.LOGGEDIN = "operator";
+        };
+        function SIO_QR_freepass() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_FREEPASS";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR_FREEPASS");
+            //GLOBALS.LOGGEDIN = "freepass";
+        };
+        function SIO_QR_testpass() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_TESTPASS";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR_TESTPASS");
+            //GLOBALS.LOGGEDIN = "testpass";
+        };
+        function SIO_QR_developer() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "DEVELOPER_QR_TESTPASS";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR_TESTPASS");
+            //GLOBALS.LOGGEDIN = "developer";
+        };
+        function SIO_get_QRVALID() {
+            console.log("SIO_get_QRVALID");
+            resetDIVS();
+            showDIV("DIV_LIST_QR");
+            let terminal = "x";;
+            let action = "OPERATOR_GET_QRVALIDCODES";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+        function SIO_create_QRCODES() {
+            console.log("SIO_get_QRVALID");
+            resetDIVS();
+            showDIV("DIV_LIST_QR");
+            let terminal = "x";;
+            let action = "OPERATOR_CREATE_QRCODES";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+    </script>
+</head>
+
+<div class="hwlogo_operator"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+
+<body class="inventory_background">
+
+    <div class="operator_menu">
+        <div class="operator_header">QR MANAGER</div>
+        <div class="btnWide" onclick="SIO_create_QRCODES()">CREATE QR CODES</div>
+        <div class="btnWide" onclick="SIO_get_QRVALID()">QR VALID</div>
+        <div class="btnWide" onclick="SIO_QR_operator()">OPERATOR_QR</div>
+        <div class="btnWide" onclick="SIO_QR_freepass()">FREEPASS</div>
+        <div class="btnWide" onclick="SIO_QR_testpass()">TESTPASS</div>
+       
+    </div>
+
+    <div class="operator_block">
+        <div class="inventory_panel">
+             <div id="DIV_OPERATOR_QR" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR')">
+                <h1>OPERATOR QR</h1><br> ALLOWS YOU TO SWITCH FROM CLIENT TO OPERATOR MODE ON CONSOLES<br>
+            </div>
+            <div><img style="width:100%" src="/qrOperator/HWQR_________OPERATOR.png" \></div>
+        </div>
+
+        <div id="DIV_OPERATOR_QR_FREEPASS" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR_FREEPASS')">
+                <h1>FREEPASS</h1><br>ALLOWS YOU TO ORDER CARS.<br>DO NOT SHARE WITH CUSTOMERS.<br>
+            </div>
+            <div><img style="width:100%" src="/qrOperator/HWQR_________FREEPASS.png" \></div>
+        </div>
+
+        <div id="DIV_OPERATOR_QR_TESTPASS" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR_TESTPASS')">
+                <h1>TESTPASS</h1><br>ALLOWS YOU TO ORDER CARS, WITHOUT UPDATING THE DATABASE. PUT CARS BACK AFTER
+                ORDERING!<br>DO NOT SHARE WITH CUSTOMERS.<br>
+            </div>
+            <div><img style="width:100%" src="/qrOperator/HWQR_________TESTPASS.png" \></div>
+        </div>
+            <div id="DIV_LIST_QR" class="qr_container"></div>
+
+        </div>
+    </div>
+</body>
+
+</html>

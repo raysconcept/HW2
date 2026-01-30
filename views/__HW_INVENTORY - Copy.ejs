@@ -1,0 +1,395 @@
+<html lang="en" dir="ltr">
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>HW INVENTORY</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <script>
+        const PAGE = "INVENTORY";
+        function resetDIVS() {
+            hideDIV("DIV_LIST_INVENTORY");
+            hideDIV("DIV_LIST_QR");
+            hideDIV("DIV_ENTRY_CAT");
+            hideDIV("DIV_ENTRY_CAR");
+            hideDIV("DIV_UPLOADPHOTOS");
+            hideDIV("DIV_OPERATOR_QR");
+            hideDIV("DIV_OPERATOR_QR_FREEPASS");
+            hideDIV("DIV_OPERATOR_QR_TESTPASS");
+
+        }
+        /*
+                S2.on("DBUPDATE", function (e) {
+                    terminal = e.split("__")[0]; console.log("==> S2: MFS terminal    :" + terminal);
+                    action = e.split("__")[1]; console.log("==> S2: MFS action      :(" + action + ")");
+                    message = e.split("__")[2]; console.log("==> S2: MFS message     :" + message);
+                    document.getElementById("HEAD_MSG").innerHTML = "MESSAGE:" + e;
+                })
+        */
+
+        function uploadPhotos() {
+            resetDIVS();
+            showDIV("DIV_UPLOADPHOTOS");
+        }
+
+        function newEntryCar() {
+            resetDIVS();
+            showDIV("DIV_ENTRY_CAR");
+        }
+
+        function newEntryCat() {
+            resetDIVS();
+            showDIV("DIV_ENTRY_CAT");
+        }
+
+        function SIO_QR_operator() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_TAG";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR");
+        };
+        function SIO_QR_freepass() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_FREEPASS";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR_FREEPASS");
+        };
+        function SIO_QR_testpass() {
+            resetDIVS();
+            let terminal = "x";
+            let action = "OPERATOR_QR_TESTPASS";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+            showDIV("DIV_OPERATOR_QR_TESTPASS");
+        };
+
+        function SIO_getInventoryAll() {
+            resetDIVS();
+            showDIV("DIV_LIST_INVENTORY");
+            let terminal = "x";
+            let action = "OPERATOR_GETINVENTORY_ALL";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+        function SIO_getInventoryFill() {
+            resetDIVS();
+            showDIV("DIV_LIST_INVENTORY");
+            let terminal = "x";
+            let action = "OPERATOR_GETINVENTORY_FILL";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+        function SIO_getInventoryWarehouse() {
+            resetDIVS();
+            showDIV("DIV_LIST_INVENTORY");
+            let terminal = "x";;
+            let action = "OPERATOR_GETINVENTORY_WAREHOUSE";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_get_QRVALID() {
+            console.log("SIO_get_QRVALID");
+            resetDIVS();
+            showDIV("DIV_LIST_QR");
+            let terminal = "x";;
+            let action = "OPERATOR_GET_QRVALIDCODES";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+
+        function SIO_create_QRCODES() {
+            console.log("SIO_get_QRVALID");
+            resetDIVS();
+            showDIV("DIV_LIST_QR");
+            let terminal = "x";;
+            let action = "OPERATOR_CREATE_QRCODES";
+            let message = "x";
+            let MSG = terminal + "___" + action + "___" + message;
+            S2.emit('MFO', MSG);
+        };
+        function emptyCarsFromCassetteToWarehouse(casNr) {
+            if (confirm("take cars from cassette" + casNr + "and add to warehouse")) {
+                alert("take out cars is done, reload to see changes");
+                let terminal = "x";;
+                let action = "OPERATOR_emptyCarsFromCassetteToWarehouse";
+                let message = casNr;
+                let MSG = terminal + "___" + action + "___" + message;
+                S2.emit('MFO', MSG);
+            } else { alert("emptyCarsFromCassetteToWarehouse, no changes made"); }
+        }
+        function addToWareHouse(carAsset, amount) {
+            if (confirm("new arrivals to add to amount in warehouse")) {
+                alert("addToWareHouse is done, reload to see changes");
+                let terminal = "x";;
+                let action = "OPERATOR_addToWareHouse";
+                let message = [carAsset, amount]; // kan dit?
+                let MSG = terminal + "___" + action + "___" + message;
+                S2.emit('MFO', MSG);
+
+            } else { alert("addToWareHouse canceled / no changes made"); }
+        }
+        function fillUpCassette(casNr) {
+
+            if (confirm("move cars from warehouse to machine. Check the amount to fill up!")) {
+                alert("fillUpCassette is done, reload to see changes");
+                let terminal = "x";;
+                let action = "OPERATOR_fillUpCassette";
+                let message = casNr;
+                let MSG = terminal + "___" + action + "___" + message;
+                S2.emit('MFO', MSG);
+
+            } else { alert("fillUpCassette canceled / no changes made"); }
+        }
+
+    </script>
+</head>
+
+<div class="hwlogo_operator"><img src="/hw_img/HWLOGO.png" style="width:100%;"></div>
+
+<body class="inventory_background">
+
+    <div class="operator_menu">
+        <div class="operator_header">HOTWHEELS INVENTORY</div>
+        <!--<button onclick="window.open('/HW_DATABASE', '_blank')" class="btnWide">ENTRY NEW CARS&CATEGORIES</button>
+        <form method="POST" action="/HW_OPERATOR_REQUEST" class="x" autocomplete="off">
+            
+        <button type="submit" value="RFO_QR_DROPALL" name="cmnd" class="btnWide"
+            onclick="submitQRDropAll()">DELETE ALL VALID QR FROM SYSTEM (THIS MAKES ALL PRINTED QR CODES INVALID)</button>
+        <button type="submit" value="RFO_PUT_CARS_IN_CASSETTES_SERIAL" name="cmnd" class="btnWide"
+            onclick="submitPutCarsInCassettesSerial()">PUT_CARS_IN_CASSETTES_SERIAL</button>        
+        </form>-->
+
+        <div class="btnWide" onclick="newEntryCar()">NEW CAR</div>
+        <div class="btnWide" onclick="newEntryCat()">NEW CATEGORY</div>
+        <div class="btnWide" onclick="uploadPhotos()">UPLOAD PHOTOS</div>
+
+        <div class="btnWide" onclick="SIO_getInventoryAll()">INVENTORY ALL</div>
+        <div class="btnWide" onclick="SIO_getInventoryFill()">INVENTORY FILL</div>
+        <div class="btnWide" onclick="SIO_getInventoryWarehouse()">WAREHOUSE</div>
+
+
+
+        <div id="DIV_OPERATOR_QR" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR')">
+                <h1>OPERATOR QR</h1><br> ALLOWS YOU TO SWITCH FROM CLIENT TO OPERATOR MODE ON CONSOLES<br>
+            </div>
+            <div><img style="width:100%" src="qrOperator/HWQR_________OPERATOR.png" \></div>
+        </div>
+
+        <div id="DIV_OPERATOR_QR_FREEPASS" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR_FREEPASS')">
+                <h1>FREEPASS</h1><br>ALLOWS YOU TO ORDER CARS.<br>DO NOT SHARE WITH CUSTOMERS.<br>
+            </div>
+            <div><img style="width:100%" src="qrOperator/HWQR_________FREEPASS.png" \></div>
+        </div>
+
+        <div id="DIV_OPERATOR_QR_TESTPASS" class="operator_QR_popup">
+            <div class="red" onClick="hideDIV('DIV_OPERATOR_QR_TESTPASS')">
+                <h1>TESTPASS</h1><br>ALLOWS YOU TO ORDER CARS, WITHOUT UPDATING THE DATABASE. PUT CARS BACK AFTER
+                ORDERING!<br>DO NOT SHARE WITH CUSTOMERS.<br>
+            </div>
+            <div><img style="width:100%" src="qrOperator/HWQR_________TESTPASS.png" \></div>
+        </div>
+
+    </div>
+    <!-- INVENTORY -->
+    <div class="inventory_results_container">
+        <div id="DIV_LIST_INVENTORY" class="inventory_container"></div>
+        <div id="DIV_LIST_QR" class="qr_container"></div>
+
+        <div id="DIV_UPLOADPHOTOS" class="blockContent" style="display:none">
+            <div class=itemName>UPLOAD CAR PHOTOS
+                <div id="CARPHOTO"></div>
+                <select name="CARS" class="itemName" id="uploadPhoto_carSelected">
+                    <option disabled selected>choose a car model to add photos to</option>
+                    <% CARS.forEach(CAR=> { %>
+                        <option value="<%= CAR.carAssets %>">
+                            <%= CAR.carAssets%>:
+                                <%= CAR.carName%>
+                                <%= CAR.carName%>
+
+                        </option>
+                        <% }); %>
+                </select>
+            </div>
+            <script let selectedCar=null;>
+                document.getElementById('uploadPhoto_carSelected').addEventListener('change', function () {
+                    selectedCar = {
+                        carAsset: this.value,
+                        carName: this.options[this.selectedIndex].text
+                    };
+                    //alert(selectedCar.carAsset + "///" + selectedCar.carName);
+                    //console.log('Car saved:', selectedCar);
+                });
+            </script>
+            
+            <div class=blockContent>
+                <div id="openFolder" class="folder-upload-btn">
+                    <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none"
+                        accept="image/*">
+                    <button type="button" onclick="document.getElementById('folderInput').click()">
+                        Select Folder with Images
+                    </button>
+                    <div id="uploadStatus" style="margin-top: 5px; font-size: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- end upload images -->
+        </div>
+
+        <div id="DIV_ENTRY_CAT" style="display:none">
+
+            <div class=itemName>NEW CATEGORY
+                <form action="HW_DB_CAT_NEW" method="post" onsubmit="setTimeout(function(){
+                    alert('category added, reloading page');
+                    window.location.reload();}, 1);">
+                    <input type="text" name="CAT_NAME">
+                    <button type="submit" formnovalidate>save new category</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="DIV_ENTRY_CAR" style="display:none">
+            <div class=itemName>NEW CAR
+
+                <form action="HW_DB_CAR_NEW" method="post" id="HW_DB_CAR_NEW" onsubmit="setTimeout(function(){
+                    alert('car added, reloading page');
+                    window.location.reload();}, 1);">
+                    <br>
+                    <div class=itemName>CHOOSE A CATEGORY FOR THE CAR<br>
+                        <select name="CAR_CATEGORY" class="itemName">
+                            <option disabled selected>choose a category</option>
+                            <% CATEGORIES.forEach(CATEGORY=> { %>
+                                <option value="<%= CATEGORY.categoryId %>">
+                                    <%= CATEGORY.categoryName %>
+                                </option>
+                                <% }); %>
+                        </select>
+                    </div>
+                    <br>
+                    <div class=blockContent>
+                        <div class=itemName>CAR_NAME</div><input type="text" name="CAR_NAME" class=inventory_inputField
+                            required>
+                    </div>
+                    <div class=blockContent>
+                        <div class=itemName>CAR_ASSETS</div><input type="text" name="CAR_ASSETS"
+                            class=inventory_inputField required>
+                    </div>
+                    <!--
+                <div class=blockContent>
+                    <div class=itemName>CAR_HEIGHT</div><input type="text" name="CAR_HEIGHT" class=inventory_inputField
+                        value=0 required>
+                </div>
+                <div class=blockContent>
+                    <div class=itemName>CAR_LENGTH</div><input type="text" name="CAR_LENGTH" class=inventory_inputField
+                        value=0 required>
+                </div>
+                <div class=blockContent>
+                    <div class=itemName>CAR_SPEED</div><input type="text" name="CAR_SPEED" class=inventory_inputField
+                        value=0 required>
+                </div>
+                <div class=blockContent>
+                    <div class=itemName>CAR_ACCELERATION</div><input type="text" name="CAR_ACC"
+                        class=inventory_inputField value=0 required>
+                </div>
+                -->
+                    <div class=btn>
+                        <button type="submit" class="btn">Save new car</button>
+                    </div>
+
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+
+        const originalAlert = window.alert;
+
+        // Handle folder selection
+        let selectedFiles = [];
+
+        document.getElementById('folderInput').addEventListener('change', async function (e) {
+
+            const files = Array.from(e.target.files);
+            let selectedFile = files[1];
+
+            // Create a temporary URL that the browser can use
+            let objectUrl = URL.createObjectURL(selectedFile);
+
+            // Set this URL as the image source
+            document.getElementById('CARPHOTO').innerHTML = "<img src='" + objectUrl + " ' style='width:200px; '>";
+            await uploadAllFiles(files);
+
+        });
+
+        async function uploadAllFiles(files) {
+
+            if (!files.length) {
+                alert("No files selected!");
+                return;
+            }
+
+            if (!selectedCar || !selectedCar.carAsset) {
+                alert("No car folder selected!");
+                return;
+            }
+
+            try {
+
+                // Upload each file
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    await uploadSingleFileWithFetch(file, selectedCar.carAsset);
+                }
+
+                alert(`Successfully uploaded ${files.length} files to ${selectedCar.carAsset}`);
+
+            } catch (error) {
+                console.error("Upload error:", error);
+                alert("Error uploading files: " + error.message);
+            }
+
+            // Alternative using fetch API (if you prefer)
+            async function uploadSingleFileWithFetch(file, targetFolder) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('folderPath', targetFolder);
+                formData.append('fileName', file.name);
+
+                const response = await fetch('/HW_DB_CAR_UPLOADPHOTOS', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.statusText}`);
+                }
+
+                return await response.json();
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>

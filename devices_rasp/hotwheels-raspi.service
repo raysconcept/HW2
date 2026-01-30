@@ -1,0 +1,26 @@
+[Unit]
+Description=HotWheels Raspberry Pi Client Service
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=user
+WorkingDirectory=/home/user/Desktop/HOTWHEELS-main/devices_rasp/raspi_client
+ExecStart=/usr/bin/python3 /home/user/Desktop/HOTWHEELS-main/devices_rasp/raspi_client/main.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hotwheels-raspi
+
+# Environment variables (if user)
+Environment=PYTHONPATH=/home/pi/Desktop/HOTWHEELS-main/devices_rasp/raspi_client
+Environment=PYTHONUNBUFFERED=1
+
+# Restart policy
+RestartPreventExitStatus=0
+
+[Install]
+WantedBy=multi-user.target

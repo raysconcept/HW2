@@ -1,0 +1,506 @@
+<!DOCTYPE html lang="en" dir="ltr">
+
+<!-- <html lang="en" dir="ltr"> -->
+<div class=blockContent><%- include('__HW_SIO.ejs') %></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>HW ROBOT CALIBRATION</title>
+    <link rel="stylesheet" href="css/stylesHW.css">
+    <script>
+        const PAGE = "HW_ROBOT";
+        function hideDIV(DIV) {
+            const element = document.getElementById(DIV);
+            if (element) {
+                element.style.display = "none";
+            }
+        }
+        function showDIV(DIV) {
+
+            const element = document.getElementById(DIV);
+            if (element) {
+                element.style.display = "block";
+            }
+        }
+        function hideAllDivs() {
+            hideDIV('DIV_ROBOT_STARTSTOP');
+            hideDIV('DIV_CAL_DROP');
+            hideDIV('DIV_TEST_DROPOFFS');
+            hideDIV('DIV_PICKING_MOVES');
+            hideDIV('DIV_HOME_POSITIONS');
+            hideDIV('DIV_GRIPPER');
+            hideDIV('DIV_REL_MOVES');
+            hideDIV('DIV_DANCE_MOVES');
+            hideDIV('DIV_CASSETTE_MOVES');
+            hideDIV('DIV_PICKING_FROM_CASSETTE');
+            hideDIV('DIV_MOVE_RELATIVE');
+            hideDIV('DIV_UR_SCRIPTS');
+            hideDIV('DIV_TEST_RUNS');
+            hideDIV('DIV_CALIBRATE_CASSETTES');
+        }
+        function showAllDivs() {
+            showDIV('DIV_ROBOT_STARTSTOP');
+            showDIV('DIV_CAL_DROP');
+            showDIV('DIV_TEST_DROPOFFS');
+            showDIV('DIV_PICKING_MOVES');
+            showDIV('DIV_HOME_POSITIONS');
+            showDIV('DIV_GRIPPER');
+            showDIV('DIV_REL_MOVES');
+            showDIV('DIV_DANCE_MOVES');
+            showDIV('DIV_CASSETTE_MOVES');
+            showDIV('DIV_PICKING_FROM_CASSETTE');
+            showDIV('DIV_MOVE_RELATIVE');
+            showDIV('DIV_CASSETTE_Z_CALIBRATION');
+            showDIV('DIV_UR_SCRIPTS');
+            showDIV('DIV_TEST_RUNS');
+            showDIV('DIV_ROBOT_INFO');
+            showDIV('DIV_ROBOT_STATUS');
+            showDIV('DIV_CALIBRATE_CASSETTES');
+        }
+        //hideAllDivs();   
+        function toggleDIV(DIV) {
+
+            hideAllDivs();
+            const element = document.getElementById(DIV);
+            if (!element) {
+                console.error('Element not found:', DIV);
+                return;
+            }
+            const currentDisplay = element.style.display || getComputedStyle(element).display;
+            if (currentDisplay === "none") {
+                element.style.display = "block";
+            } else {
+                element.style.display = "none";
+            }
+        }
+
+        function sendRobotCommand(command) {
+            /*
+            Scoped Controller/Timeout: Each call to sendRobotCommand gets 
+            its own AbortController and timeout, so commands won't interfere 
+            with each other.
+            Proper Cleanup: The timeout is properly cleared in the finally block.
+            Isolated Operations: Each command execution is completely independent.
+            */
+            const controller = new AbortController();
+            const timeoutMs = 2000; // Increased to 10 seconds
+            const timeoutId = setTimeout(() => {
+                console.warn(`Command ${command} is still processing...`);
+                controller.abort();
+            }, timeoutMs);
+
+            fetch("/HW_ROBOT_COMMAND", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cmnd: command }),
+                signal: controller.signal
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    console.log("Command sent:", command);
+                })
+                .catch(err => {
+                    if (err.name === 'AbortError') {
+                        console.log(`Command ${command} is still processing on the robot. This is normal for longer operations.`);
+                    } else {
+                        console.error("Error sending command:", err);
+                    }
+                })
+                .finally(() => clearTimeout(timeoutId));
+        }
+
+        // Robot control functions
+        function ROBOT_UNHALT(GLOBALS) {
+            showDIV("DIV_ROBOT_STOP"); hideDIV("DIV_ROBOT_UNHALT");
+
+            sendRobotCommand("ROBOT_UNHALT"); alert("robot is unhalted, it can continue picking from the cueline now.");
+        }
+        function ROBOT_STOP() {
+            showDIV("DIV_ROBOT_UNHALT"); hideDIV("DIV_ROBOT_STOP");
+            sendRobotCommand("ROBOT_STOP"); alert("The robot was only stopped programmatically. It may automatically resume picking from the cueLine. If you need it to shut down completely, press the emergy button on the teachpanel.");
+        }
+        function ROBOT_CONNECT() { sendRobotCommand("ROBOT_CONNECT"); }
+
+        // Calibration dropoff functions
+        function CALIBRATION_DROPOFF_1_START() {
+            let pw = prompt("Enter password:");
+            if (pw == "calibration123") {
+                alert("See manual [CALIBRATION DROPOFF]. \n\n1.Use the teachpanel to put the robotarm in freedrive. \n\n2.Use the calibration tool to move the gripper in the correct position.\n\n3.Confirm the new calibration.");
+                let confirmSave = confirm("Is the gripper positioned in the calibration tool at the dropOff?\nPressing OKE will save the position the gripper is in right now. \n\nAre you sure the position is correct?");
+                if (confirmSave) {
+                    sendRobotCommand("CALIBRATION_DROPOFF_1_SAVE");
+                    // the save command is send to ROBOT_MODULE, recalculted to RADs and stored in jointsDrop1
+
+                    alert("Drop1 has been recalibrated.\nWe will test it now. \nThis will move the gripper back and forth to the calibrated position.");
+                    let confirmToolIsOut = confirm("is the calibration tool removed?");
+                    if (confirmToolIsOut) {
+                        //CALIBRATION_DROPOFF_1_TEST(); 
+                        sendRobotCommand("CALIBRATION_DROPOFF_1_TEST");
+                    }
+                    if (!confirmToolIsOut) {
+                        alert("please remove the calibration tool");
+                        let confirmToolIsOut2 = confirm("is the calibration tool removed?");
+                        if (confirmToolIsOut2) {
+                            // CALIBRATION_DROPOFF_1_TEST(); 
+                            sendRobotCommand("CALIBRATION_DROPOFF_1_TEST");
+                        }
+                        if (!confirmToolIsOut2) { alert("testing was canceled. Use the TEST command to test."); }
+                    }
+                }
+                if (!confirmSave) {
+                    alert("Calibration was canceled. Please test the position, it should not have been changed.");
+                }
+            } else { alert("wrong password. Please check the manual for the correct password."); }
+        }
+
+        function CALIBRATION_DROPOFF_1_SEQ() {
+            sendRobotCommand("CALIBRATION_DROPOFF_1_SEQ");
+        }
+
+        // Calibration dropoff functions
+        function CALIBRATION_DROPOFF_2_START() {
+            let pw = prompt("Enter password:");
+            if (pw == "calibration123") {
+                alert("See manual [CALIBRATION DROPOFF]. \n\n1.Use the teachpanel to put the robotarm in freedrive. \n\n2.Use the calibration tool to move the gripper in the correct position.\n\n3.Confirm the new calibration.");
+                let confirmSave = confirm("Is the gripper positioned in the calibration tool at the dropOff?\nPressing OKE will save the position the gripper is in right now. \n\nAre you sure the position is correct?");
+                if (confirmSave) {
+                    sendRobotCommand("CALIBRATION_DROPOFF_2_SAVE");
+                    // the save command is send to ROBOT_MODULE, recalculted to RADs and stored in jointsDrop1
+
+                    alert("Drop1 has been recalibrated.\nWe will test it now. \nThis will move the gripper back and forth to the calibrated position.");
+                    let confirmToolIsOut = confirm("is the calibration tool removed?");
+                    if (confirmToolIsOut) {
+                        sendRobotCommand("CALIBRATION_DROPOFF_2_TEST");
+                        //CALIBRATION_DROPOFF_2_TEST(); 
+                    }
+                    if (!confirmToolIsOut) {
+                        alert("please remove the calibration tool");
+                        let confirmToolIsOut2 = confirm("is the calibration tool removed?");
+                        if (confirmToolIsOut2) {
+                            sendRobotCommand("CALIBRATION_DROPOFF_2_TEST");
+                            // CALIBRATION_DROPOFF_2_TEST(); 
+                        }
+                        if (!confirmToolIsOut2) { alert("testing was canceled. Use the TEST command to test."); }
+                    }
+                }
+                if (!confirmSave) {
+                    alert("Calibration was canceled. Please test the position, it should not have been changed.");
+                }
+            } else { alert("wrong password. Please check the manual for the correct password."); }
+        }
+
+        function CALIBRATION_DROPOFF_2_SEQ() {
+            sendRobotCommand("CALIBRATION_DROPOFF_2_SEQ");
+        }
+
+        // Calibration functions
+        function CALIBRATION_ANGLE_PLUS() { sendRobotCommand("CALIBRATION_ANGLE_PLUS"); }
+        function CALIBRATION_ANGLE_MINUS() { sendRobotCommand("CALIBRATION_ANGLE_MINUS"); }
+        function MOVE_UP() { sendRobotCommand("MOVE_UP"); }
+        function MOVE_DOWN() { sendRobotCommand("MOVE_DOWN"); }
+        function CALIBRATION_SAVE_ANGLE() { sendRobotCommand("CALIBRATION_SAVE_ANGLE"); }
+
+        // Test dropoffs functions
+        function ROBOT_TEST_TANGO_TO_DROP() { sendRobotCommand("ROBOT_TEST_TANGO_TO_DROP"); }
+        function ROBOT_TEST_TANGO_TO_MID() { sendRobotCommand("ROBOT_TEST_TANGO_TO_MID"); }
+        function ROBOT_TEST_DROP1() { sendRobotCommand("ROBOT_TEST_DROP1"); }
+        function ROBOT_TEST_DROP2() { sendRobotCommand("ROBOT_TEST_DROP2"); }
+        function DROP1() { sendRobotCommand("DROP1"); }
+        function DROP2() { sendRobotCommand("DROP2"); }
+
+        // Picking moves functions
+        function G_PICKANGLE() { sendRobotCommand("G_PICKANGLE"); }
+        function PICK_OUT() { sendRobotCommand("DEV_PICK_OUT"); }
+
+        // Home positions functions
+        function MOVE_HOME_MID() { sendRobotCommand("MOVE_HOME_MID"); }
+        function MOVE_HOME_LEFT() { sendRobotCommand("MOVE_HOME_LEFT"); }
+        function MOVE_HOME_RIGHT() { sendRobotCommand("MOVE_HOME_RIGHT"); }
+        function MOVE_PRESENT_CAR() { sendRobotCommand("MOVE_PRESENT_CAR"); }
+        function MOVE_SAFE_CROWD() { sendRobotCommand("MOVE_SAFE_CROWD"); }
+
+        // Gripper functions
+        function GACTIVATE() { sendRobotCommand("GACTIVATE"); }
+        function GOPEN() { sendRobotCommand("GOPEN"); }
+        function GCLOSE_LOW() { sendRobotCommand("GCLOSE_LOW"); }
+        function GCLOSE_MEDIUM() { sendRobotCommand("GCLOSE_MEDIUM"); }
+        function GCLOSE_HIGH() { sendRobotCommand("GCLOSE_HIGH"); }
+
+        // moves functions
+        function MOVE_IN() { sendRobotCommand("MOVE_IN"); }
+        function MOVE_OUT() { sendRobotCommand("MOVE_OUT"); }
+        function MOVE_LEFT() { sendRobotCommand("MOVE_LEFT"); }
+        function MOVE_RIGHT() { sendRobotCommand("MOVE_RIGHT"); }
+        function MOVE_UP() { sendRobotCommand("MOVE_UP"); }
+        function MOVE_DOWN() { sendRobotCommand("MOVE_DOWN"); }
+
+        function TESTRUN_1() { sendRobotCommand("TESTRUN_1"); }
+        function TESTRUN_2() { sendRobotCommand("TESTRUN_2"); }
+        function TESTRUN_3() { sendRobotCommand("TESTRUN_3"); }
+        function TESTRUN_4() { sendRobotCommand("TESTRUN_4"); }
+
+        // looking
+        function G_LOOK_LEFT() { sendRobotCommand("G_LOOK_LEFT"); }
+        function G_LOOK_RIGHT() { sendRobotCommand("G_LOOK_RIGHT"); }
+
+        // dance
+        function DANCE_1() { sendRobotCommand("DANCE_1"); }
+        function DANCE_2() { sendRobotCommand("DANCE_2"); }
+        function DANCE_3() { sendRobotCommand("DANCE_3"); }
+        function DANCE_4() { sendRobotCommand("DANCE_4"); }
+
+        // Cassette functions
+        function moveToCassette(c) { sendRobotCommand("CAS" + c); }
+        function pickFromCassette(c) { sendRobotCommand("PIC" + c); }
+
+        // UR Scripts functions
+        function LIST_ROBOTFUNCTIONS() { sendRobotCommand("LIST_ROBOTFUNCTIONS"); }
+
+        // Test runs functions
+        function RUN_1() { sendRobotCommand("RUN_1"); }
+        function RUN_2() { sendRobotCommand("RUN_2"); }
+        function RUN_3() { sendRobotCommand("RUN_3"); }
+        function RUN_4() { sendRobotCommand("RUN_4"); }
+        function RUN_5() { sendRobotCommand("RUN_5"); }
+        function RUN_6() { sendRobotCommand("RUN_6"); }
+        function RUN_7() { sendRobotCommand("RUN_7"); }
+        function RUN_8() { sendRobotCommand("RUN_8"); }
+        function RUN_9() { sendRobotCommand("RUN_9"); }
+        function RUN_10() { sendRobotCommand("RUN_10"); }
+
+        function CALIBRATION_TEST_CURRENT_SETTING() { sendRobotCommand("HW_ROBOT_CALIBRATION_TEST_CURRENT_SETTING"); }
+
+    </script>
+
+</head>
+
+<body>
+    <div id="DIV_ROBOT_COMMAND_SEND" class="wide">DIV_ROBOT_COMMAND_SEND</div>
+
+    <div class="blockContainer">
+        <div class="blockHeader">HOTWHEELS ROBOT CALIBRATION</div>
+
+        <body>
+            <div id="DIV_ROBOT_COMMAND_SEND" class="wide">DIV_ROBOT_COMMAND_SEND</div>
+
+            <div class="blockContainer">
+
+                <button onclick="window.open('/HW_ROBOT_CALIBRATION', '_blank')" class="btnWide">ROBOT PLANE
+                    CALIBRATION</button>
+                <div id="DIV_ROBOT_INFO" class="robot_status_container">
+                    <div class="robot_status_header">Robot Info</div>
+                    <div class="robot_status_content">
+                        <div id="DIV_ROBOT_INFO_SITELOCATION">machineId: <%-RES_MACHINE.machineId %></div>
+                        <div id="DIV_ROBOT_INFO_SITELOCATION">site_location: <%-RES_MACHINE.site_location %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTSERIALNR">robotSerialNr: <%-RES_MACHINE.robotSerialNr %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTSERIALNR">gripperSerialNr: <%-RES_MACHINE.gripperSerialNr %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTSERIALNR">gripperType: <%-RES_MACHINE.gripperType %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTCALIBRATIONANGLE">calibrationAngle:<%-RES_MACHINE.calibrationAngle
+                                %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTCALIBRATIONANGLE">nr_consoles:<%-RES_MACHINE.nr_consoles %></div>
+                        <div id="DIV_ROBOT_INFO_ROBOTCALIBRATIONANGLE">nr_drops:<%-RES_MACHINE.nr_drops %></div>
+                    </div>
+                </div>
+
+                <div id="DIV_ROBOT_STATUS" class="robot_status_container">
+                    <div class="robot_status_header">Robot Status</div>
+                    <div class="robot_status_content">
+                        <div>Connection: <span id="robot_connection_status">Disconnected</span></div>
+                        <div>Program Running: <span id="robot_availability_status">No</span></div>
+                        <div>Base: <span id="robot_joint_1">-</span></div>
+                        <div>Shoulder: <span id="robot_joint_2">-</span></div>
+                        <div>Elbow: <span id="robot_joint_3">-</span></div>
+                        <div>Wrist 1: <span id="robot_joint_4">-</span></div>
+                        <div>Wrist 2: <span id="robot_joint_5">-</span></div>
+                        <div>Wrist 3: <span id="robot_joint_6">-</span></div>
+                        <div>TCP X (mm): <span id="robot_tcp_x">-</span></div>
+                        <div>TCP Y (mm): <span id="robot_tcp_y">-</span></div>
+                        <div>TCP Z (mm): <span id="robot_tcp_z">-</span></div>
+                        <div>TCP Rx (rad): <span id="robot_tcp_rx">-</span></div>
+                        <div>TCP Ry (rad): <span id="robot_tcp_ry">-</span></div>
+                        <div>TCP Rz (rad): <span id="robot_tcp_rz">-</span></div>
+                    </div>
+                </div>
+
+                <div class="robot_menu">
+                    <div class="robot_menu_btn" onclick="showAllDivs()">SHOW ALL</div>
+                    <div class="robot_menu_btn" onclick="hideAllDivs()">HIDE ALL</div>
+
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_ROBOT_STATUS')">ROBOT STATUS</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_ROBOT_INFO')">ROBOT INFO</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_HOME_POSITIONS')">HOME_POSITIONS</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_REL_MOVES')">RELATIVE_MOVES</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_TEST_DROPOFFS')">TEST DROPOFFS</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_PICKING_MOVES')">PICKING_MOVES</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_GRIPPER')">GRIPPER</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_DANCE_MOVES')">DANCE_MOVES</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_CASSETTE_MOVES')">CASSETTE_MOVES</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_TEST_RUNS')">TEST RUNS</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_CAL_DROP')">CALIBRATION_DROPOFFS</div>
+                    <div class="robot_menu_btn" onclick="toggleDIV('DIV_CALIBRATE_CASSETTES')">CALIBRATE CASSETTES</div>
+                </div>
+
+                <div class="robot_container">
+                    <div class="robot_emergencyStop">
+                        <button id="DIV_ROBOT_STOP" onclick="ROBOT_STOP()" class="robot_emergencyStop">ROBOT STOP</button>
+                        <button id="DIV_ROBOT_UNHALT" onclick="ROBOT_UNHALT()" class="robot_emergencyStop">ROBOT UNHALT <br>(release)</button>
+                    </div>
+
+                    <div id="DIV_ROBOT_STARTSTOP" class="robot_block">
+                        <div class="robot_block_header">START / STOP</div>
+                        <div onClick="ROBOT_STOP()" class="red">ROBOT STOP</div>
+                        <div onClick="ROBOT_CONNECT()" class="btn">ROBOT CONNECT</div>
+                    </div>
+
+                    <div id="DIV_CAL_DROP" class="robot_block">
+                        <div class="robot_block_header">DROPOFF CALIBRATION</div>
+
+                        <!-- RAY NEW DROPOFF CALIBRATION-->
+                        <div onClick="CALIBRATION_DROPOFF_1_START()" class="btn">CALIBRATION_DROPOFF_1_START</div>
+                        <div onClick="CALIBRATION_DROPOFF_1_SEQ()" class="btn">CALIBRATION_DROPOFF_1_SEQ</div>
+
+                        <div onClick="CALIBRATION_DROPOFF_2_START()" class="btn">CALIBRATION_DROPOFF_2_START</div>
+                        <div onClick="CALIBRATION_DROPOFF_2_SEQ()" class="btn">CALIBRATION_DROPOFF_2_SEQ</div>
+
+                        <!-- RAY OBSOLETE DROPOFF CALIBRATIONS
+                        <div onClick="CALIBRATION_DROPOFF_TO_1()" class="btn">CALIBRATION_DROPOFF_TO_1</div>
+                        <div onClick="CALIBRATION_DROPOFF_OVER_1()" class="btn">CALIBRATION_DROPOFF_OVER_1</div>
+                        <div onClick="CALIBRATION_DROPOFF_ROTATE_1()" class="btn">CALIBRATION_DROPOFF_ROTATE_1</div>
+                        <div onClick="CALIBRATION_DROPOFF_RELEASE_1()" class="btn">CALIBRATION_DROPOFF_RELEASE_1</div>
+
+                        <div onClick="CALIBRATION_DROPOFF_TO_2()" class="btn">CALIBRATION_DROPOFF_TO_2</div>
+                        <div onClick="CALIBRATION_DROPOFF_OVER_2()" class="btn">CALIBRATION_DROPOFF_OVER_2</div>
+                        <div onClick="CALIBRATION_DROPOFF_ROTATE_2()" class="btn">CALIBRATION_DROPOFF_ROTATE_2</div>
+                        <div onClick="CALIBRATION_DROPOFF_RELEASE_2()" class="btn">CALIBRATION_DROPOFF_RELEASE_2</div>
+                        -->
+
+                    </div>
+
+                    <div id="DIV_CALIBRATE_CASSETTES" class="robot_block">
+                        <div class="robot_block_header">CALIBRATE CASSETTES</div>
+                        <div id=DIV_ROBOT_CALIBRATION_UPDATE_ANGLE class="widex">angle: <%-RES_MACHINE.calibrationAngle
+                                %></div>
+
+                        <button onclick="CALIBRATION_TEST_CURRENT_SETTING()" class="btn">TEST CURRENT SETTING<br>
+                            moves the gripper to upper cassette and then down. Measure the offset when it
+                            stops.</button>
+
+                        <button onclick="CALIBRATION_ANGLE_PLUS()" class="btn">CALIBRATION_ANGLE_PLUS (CW)</button>
+                        <button onclick="CALIBRATION_ANGLE_MINUS()" class="btn">CALIBRATION_ANGLE_MINUS (CCW)</button>
+
+                        <button onclick="MOVE_UP()" class="btn">CHECK ALIGNMENT MOVE UP</button>
+                        <button onclick="MOVE_DOWN()" class="btn">CHECK ALIGNMENT MOVE DOWN</button>
+                        <button onclick="CALIBRATION_SAVE_ANGLE()" class="btn">CALIBRATION_SAVE_ANGLE</button>
+                    </div>
+
+                    <div id="DIV_TEST_DROPOFFS" class="robot_block">
+                        <div class="robot_block_header">TEST DROPOFFS</div>
+                        <button onclick="ROBOT_TEST_TANGO_TO_DROP()" class="btn">TANGO_TO_DROP</button>
+                        <button onclick="ROBOT_TEST_TANGO_TO_MID()" class="btn">TANGO_TO_MID</button>
+                        <!--
+                        <button onclick="ROBOT_TEST_DROP1()" class="btn">TEST DROP 1 DIRECT</button>
+                        <button onclick="ROBOT_TEST_DROP2()" class="btn">TEST DROP 2 DIRECT</button>
+                        <button onclick="DROP1()" class="btn">Drop on Track 1</button>
+                        <button onclick="DROP2()" class="btn">DROP on Track 2</button>
+                        -->
+                    </div>
+
+                    <div id="DIV_PICKING_MOVES" class="robot_block">
+                        <div class="robot_block_header">PICKING MOVES</div>
+
+                        <button onclick="PICK_OUT()" class="btn">PICK_OUT</button>
+                        <div class="robot_block_header">PICK FROM CASSETTE</div>
+                        <div id="cassettesPick">PICK</div>
+                        <script>for (c = 1; c < 163; c++) {
+                                let CASSETTE = "PIC" + c;
+                                document.getElementById("cassettesPick").innerHTML +=
+                                    "<button  onClick='sendRobotCommand(\"" + CASSETTE + "\");' class=robot_pick_cassette_valid>" + c + "</button>";
+                            }
+                        </script>
+                    </div>
+
+                    <div id="DIV_HOME_POSITIONS" class="robot_block">
+                        <div class="robot_block_header">HOME POSITIONS</div>
+                        <button onclick="MOVE_HOME_MID()" class="btn">MOVE_HOME_MID</button>
+                        <button onclick="MOVE_HOME_LEFT()" class="btn">MOVE_HOME_LEFT</button>
+                        <button onclick="MOVE_HOME_RIGHT()" class="btn">MOVE_HOME_RIGHT</button>
+                        <button onclick="MOVE_PRESENT_CAR()" class="btn">PRESENT CAR</button>
+                        <button onclick="MOVE_SAFE_CROWD()" class="btn">MOVE_SAFE_CROWD</button>
+                    </div>
+
+                    <div id="DIV_GRIPPER" class="robot_block">
+                        <div class="robot_block_header">GRIPPER</div>
+                        <button onclick="GACTIVATE()" class="btn">Activate</button>
+                        <button onclick="GOPEN()" class="btn">OPEN (P4)</button>
+                        <button onclick="GCLOSE_LOW()" class="btn">CLOSE_LOW (P1)</button>
+                        <button onclick="GCLOSE_MEDIUM()" class="btn">CLOSE_MEDIUM (P2)</button>
+                        <div class="robot_block_header">LOOKING</div>
+                        <button onclick="G_LOOK_LEFT()" class="btn">G_LOOK_LEFT</button>
+                        <button onclick="G_LOOK_RIGHT()" class="btn">G_LOOK_RIGHT</button>
+                        <button onclick="G_PICKANGLE()" class="btn">G_PICKANGLE</button>
+                    </div>
+
+                    <div id="DIV_REL_MOVES" class="robot_block">
+                        <div class="robot_block_header">ROBOT (GRIPPER/TCP) <br>MOVE RELATIVE XYZ </div>
+                        <button onclick="MOVE_IN()" class="btn">MOVE_IN</button>
+                        <button onclick="MOVE_OUT()" class="btn">MOVE_OUT</button>
+                        <button onclick="MOVE_UP()" class="btn">MOVE_UP</button>
+                        <button onclick="MOVE_DOWN()" class="btn">MOVE_DOWN</button>
+                        <button onclick="MOVE_LEFT()" class="btn">MOVE_LEFT</button>
+                        <button onclick="MOVE_RIGHT()" class="btn">MOVE_RIGHT</button>
+                    </div>
+
+                    <div id="DIV_DANCE_MOVES" class="robot_block">
+                        <div class="robot_block_header">ROBOT DANCE MOVES</div>
+                        <button onclick="DANCE_1()" class="btn">DANCE_1</button>
+                        <button onclick="DANCE_2()" class="btn">DANCE_2</button>
+                        <button onclick="DANCE_3()" class="btn">DANCE_3</button>
+                        <button onclick="DANCE_4()" class="btn">DANCE_4</button>
+                    </div>
+
+                    <div id="DIV_TEST_RUNS" class="robot_block">
+                        <div class="robot_block_header">TEST RUNS <br>(pick + drop 3 cars from same cassette)</div>
+                        <button onclick="TESTRUN_1()" class="btn">TESTRUN_1</button>
+                        <button onclick="TESTRUN_2()" class="btn">TESTRUN_2</button>
+                        <button onclick="TESTRUN_3()" class="btn">TESTRUN_3</button>
+                        <button onclick="TESTRUN_4()" class="btn">TESTRUN_4</button>
+                    </div>
+
+                    <div id="DIV_CASSETTE_MOVES" class="robot_block">
+                        <div class="robot_block_header">MOVE TO CASSETTE</div>
+                        <div id="cassettesPoint"></div>
+                        <script>for (c = 1; c < 163; c++) {
+                                let CASSETTE = "CAS" + c;
+                                document.getElementById("cassettesPoint").innerHTML +=
+                                    "<button  onClick='sendRobotCommand(\"" + CASSETTE + "\");' class=robot_pick_cassette_valid>" + c + "</button>";
+                            }
+                        </script>
+                    </div>
+
+                    <!-- <div id="DIV_CASSETTE_Z_CALIBRATION" class="robot_block">
+                    <div class="robot_block_header">CASS Z_CALIBRATION, moves robot to cassette. measure z-distance and add that to calibration.</div>
+                    <div id="cassettesPointZ"></div>
+                    <script>for (c = 1; c < 163; c++) {
+                            document.getElementById("cassettesPointZ").innerHTML +=
+                                "<button  type=\"submit\" value=\"Z_CAS" + c + "\" name=\"cmnd\" class=\"robot_pick_cassette_valid\">" + c + "</button>";
+                        }
+                    </script>
+                </div> -->
+
+                    <div id="DIV_UR_SCRIPTS" class="robot_block">
+                        <div class="robot_block_header">UR SCRIPTS FOR ROBOTFUNCTIONS</div>
+                        <button type="submit" value="LIST_ROBOTFUNCTIONS" name="cmnd" class="btn">LIST URSCRIPTS
+                        </button>
+                        <div id="DIV_ROBOTUPDATE" class="wide">DIV_ROBOTUPDATE</div>
+                    </div>
+
+                    <!-- <button type="submit" value="GET_TCP_POSITION" name="cmnd" class="btn">GET_TCP_POSITION</button> -->
+                    </form>
+                </div>
+            </div>
+        </body>
+
+        </html>
